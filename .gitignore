@@ -1,0 +1,20 @@
+# segredos (connection strings, endpoints): use .env.example como modelo
+.env
+
+# ambientes Python
+maf/
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# editores / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

@@ -1,0 +1,1053 @@
+<title>MAF Workshop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+/* Layout: página única com abas (hash), cabeçalho fixo, conteúdo a 1120px; a cor divide papéis:
+   azul = agente/orquestração, âmbar = tool/dado, verde = resultado. */
+:root{
+  --bg:#F5F7FA; --panel:#FFFFFF; --panel2:#EEF2F7; --fg:#16202E; --muted:#5E6B7C; --line:#D6DDE7;
+  --accent:#2456CF; --accent-soft:#E3EAFB; --tool:#B8650A; --tool-soft:#FBEFD9; --ok:#1C8A68; --ok-soft:#DCF3EA;
+  --warn:#B23A3A; --code-bg:#0F172A; --code-fg:#E2E8F0; --code-kw:#93C5FD; --code-str:#FCD98B; --code-cm:#7C8BA3; --code-fn:#A5F3D0; --code-num:#F9A8D4;
+  --font-display:"Sora","Segoe UI",system-ui,sans-serif; --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0E131B; --panel:#161D28; --panel2:#1E2735; --fg:#E6EBF2; --muted:#98A4B5; --line:#2A3443;
+  --accent:#7FA4FF; --accent-soft:#1B2A4D; --tool:#F0B35B; --tool-soft:#3A2A12; --ok:#5FD3AB; --ok-soft:#133328;
+  --warn:#F08A8A; --code-bg:#0B1220; --code-fg:#DCE4F0; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E131B; --panel:#161D28; --panel2:#1E2735; --fg:#E6EBF2; --muted:#98A4B5; --line:#2A3443;
+  --accent:#7FA4FF; --accent-soft:#1B2A4D; --tool:#F0B35B; --tool-soft:#3A2A12; --ok:#5FD3AB; --ok-soft:#133328;
+  --warn:#F08A8A; --code-bg:#0B1220; --code-fg:#DCE4F0; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(1.6rem,3.5vw,2.3rem);font-weight:700}
+h2{font-size:1.45rem;font-weight:600}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+code,pre,kbd{font-family:var(--font-mono)}
+code{background:var(--panel2);padding:.1em .35em;border-radius:4px;font-size:.9em}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--panel);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding-block:12px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand strong{font-family:var(--font-display);font-size:1.05rem}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+nav.tabs button{font:inherit;font-weight:500;background:none;border:1px solid transparent;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer}
+nav.tabs button:hover{color:var(--fg);background:var(--panel2)}
+nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft);border-color:transparent}
+nav.tabs button:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+main .wrap{padding-block:28px 64px;display:grid;gap:28px}
+section.view[hidden]{display:none}
+section.view{display:grid;gap:24px}
+.lead{max-width:68ch;color:var(--muted);font-size:1.02rem}
+.hero{display:grid;gap:10px}
+.hero .steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.hero .steps span{font-size:.8rem;border:1px solid var(--line);padding:4px 10px;border-radius:999px;color:var(--muted)}
+.hero .steps span b{color:var(--accent);font-weight:600;margin-right:4px}
+
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;min-width:0}
+.card.pattern{cursor:pointer;text-align:left;font:inherit;color:inherit}
+.card.pattern:hover{border-color:var(--accent)}
+.card.pattern[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.card.pattern svg{width:100%;height:auto;display:block}
+.card .who{font-size:.78rem;color:var(--muted)}
+.card .who b{color:var(--fg);font-weight:600}
+
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+@media (max-width:760px){.detail{grid-template-columns:1fr}}
+.detail h3{font-size:1.25rem}
+.detail ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.detail .tag{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
+.two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+
+pre.code{background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:.82rem;line-height:1.55;margin:0;min-width:0}
+pre.code code{background:none;padding:0;font-size:inherit;color:inherit}
+.hljs-keyword,.hljs-built_in,.hljs-selector-tag{color:var(--code-kw)}
+.hljs-string,.hljs-attr{color:var(--code-str)}
+.hljs-comment,.hljs-meta{color:var(--code-cm);font-style:italic}
+.hljs-title,.hljs-function .hljs-title,.hljs-title.function_,.hljs-title.class_{color:var(--code-fn)}
+.hljs-number,.hljs-literal{color:var(--code-num)}
+
+/* decisor */
+.decide{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:14px}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.choices button,.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:8px 14px;border-radius:8px;cursor:pointer}
+.choices button:hover,.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.5;cursor:default}
+.verdict{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:10px;background:var(--ok-soft);border:1px solid var(--ok)}
+.verdict strong{font-family:var(--font-display)}
+
+/* simulador */
+.sim{display:grid;gap:16px;grid-template-columns:minmax(0,300px) minmax(0,1fr);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+@media (max-width:820px){.sim{grid-template-columns:1fr}}
+.scen-list{display:grid;gap:8px;align-content:start}
+.scen-list button{font:inherit;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;color:inherit;display:grid;gap:2px}
+.scen-list button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.scen-list button small{color:var(--muted)}
+.lanes{display:flex;flex-wrap:wrap;gap:8px}
+.lane{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:.85rem;background:var(--panel2);transition:all .25s}
+.lane .dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.lane.active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.lane.active .dot{background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.lane.done .dot{background:var(--ok)}
+.lane.done{border-color:var(--ok)}
+.log{display:grid;gap:8px;min-height:260px;max-height:520px;overflow:auto;padding:4px}
+.msg{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);animation:pop .25s ease}
+@keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.msg{animation:none}.lane{transition:none}}
+.msg .k{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:4px;white-space:nowrap;margin-top:2px}
+.msg.user .k{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.msg.agent .k{background:var(--accent-soft);color:var(--accent)}
+.msg.tool .k{background:var(--tool-soft);color:var(--tool)}
+.msg.tool{border-style:dashed}
+.msg.out .k{background:var(--ok-soft);color:var(--ok)}
+.msg.out{border-color:var(--ok)}
+.msg .b{min-width:0;white-space:pre-wrap;font-size:.9rem}
+.msg .b code{font-size:.8rem;display:block;white-space:pre-wrap;padding:6px 8px;margin-top:4px;background:var(--panel);border-radius:6px}
+.simbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.simbar .spacer{flex:1}
+.muted{color:var(--muted)}
+
+/* arquivos */
+.files{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.files{grid-template-columns:1fr}}
+.filelist{display:grid;gap:4px;align-content:start}
+.filelist .grp{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:600}
+.filelist button{font:inherit;font-family:var(--font-mono);font-size:.82rem;text-align:left;background:none;border:1px solid transparent;border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--fg)}
+.filelist button:hover{background:var(--panel2)}
+.filelist button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.filehead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.filehead code{font-size:.85rem}
+pre.file{max-height:70vh}
+
+/* tabelas */
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;font-size:.78rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
+.pill.enviado{background:var(--accent-soft);color:var(--accent)}
+.pill.pendente{background:var(--tool-soft);color:var(--tool)}
+.pill.pago{background:var(--ok-soft);color:var(--ok)}
+.pill.entregue{background:var(--panel2);color:var(--muted)}
+.pill.cancelado{background:var(--panel2);color:var(--warn)}
+
+.er svg{width:100%;height:auto;display:block;max-width:900px}
+.trace{font-family:var(--font-mono);font-size:.82rem;display:grid;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto}
+.trace .row{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px;align-items:center;white-space:nowrap}
+.trace .bar{height:10px;border-radius:3px;background:var(--accent)}
+.trace .bar.tool{background:var(--tool)}
+.trace .bar.model{background:var(--muted)}
+.trace .bar.wf{background:var(--ok)}
+.subtabs{display:flex;gap:4px;flex-wrap:wrap}
+.subtabs button{font:inherit;font-size:.85rem;background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;color:var(--fg)}
+.subtabs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.note{border-left:3px solid var(--tool);padding:8px 12px;background:var(--tool-soft);border-radius:0 8px 8px 0;font-size:.92rem}
+footer{color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-block:16px}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="eyebrow">Microsoft Agent Framework · Python</span><strong>MAF Workshop</strong></div>
+  <nav class="tabs" role="tablist" aria-label="Seções">
+    <button role="tab" data-view="orquestracao" aria-selected="true">Orquestração</button>
+    <button role="tab" data-view="cenarios" aria-selected="false">Cenários</button>
+    <button role="tab" data-view="codigo" aria-selected="false">Código</button>
+    <button role="tab" data-view="banco" aria-selected="false">Banco</button>
+    <button role="tab" data-view="comparativo" aria-selected="false">MAF × ADK</button>
+    <button role="tab" data-view="observabilidade" aria-selected="false">Observabilidade</button>
+  </nav>
+</div></header>
+
+<main><div class="wrap">
+
+<!-- ================= ORQUESTRAÇÃO ================= -->
+<section class="view" id="view-orquestracao">
+  <div class="hero">
+    <span class="eyebrow">Por onde começar</span>
+    <h1>Modelos de orquestração de agentes</h1>
+    <p class="lead">Um agente resolve conversa aberta. Um processo tem etapas. O framework traz cinco padrões prontos para coordenar vários agentes; a escolha quase sempre se resume a uma pergunta: <strong>quem decide o próximo passo, você ou o modelo?</strong> Clique em um padrão para ver quando usar e o código.</p>
+    <div class="steps"><span><b>1</b>Hello agent</span><span><b>2</b>Tools</span><span><b>3</b>Flexibilidade</span><span><b>4</b>Foundry</span><span><b>5</b>Workflows</span><span><b>6</b>Observabilidade</span></div>
+  </div>
+
+  <div class="grid" id="patterns"></div>
+
+  <div class="detail" id="pattern-detail"></div>
+
+  <div class="decide" id="decide">
+    <div><span class="eyebrow">Decisor rápido</span><h3>Qual padrão usar?</h3></div>
+    <div id="decide-body"></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h3>Use um agente quando…</h3>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+        <li>a tarefa é aberta ou conversacional;</li>
+        <li>precisa de planejamento e uso autônomo de tools;</li>
+        <li>uma chamada ao modelo (com tools) resolve.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Use um workflow quando…</h3>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+        <li>o processo tem etapas bem definidas;</li>
+        <li>você precisa controlar a ordem de execução;</li>
+        <li>vários agentes ou funções precisam se coordenar.</li>
+      </ul>
+      <p class="muted" style="font-size:.9rem">Se dá para resolver com uma função, escreva a função. Agente é para o que não cabe numa função.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CENÁRIOS ================= -->
+<section class="view" id="view-cenarios" hidden>
+  <div class="hero">
+    <span class="eyebrow">Etapa 5 · Workflows na prática</span>
+    <h1>Cenários de uso com ViaCEP e PostgreSQL</h1>
+    <p class="lead">Quatro cenários do mesmo domínio (clientes, endereços, pedidos), cada um com um padrão de orquestração diferente. O simulador reproduz a sequência real de agentes e chamadas de tool com os dados da base de demonstração.</p>
+  </div>
+  <div class="sim">
+    <div class="scen-list" id="scen-list"></div>
+    <div style="display:grid;gap:12px;min-width:0">
+      <div id="scen-head"></div>
+      <div class="lanes" id="lanes"></div>
+      <div class="simbar">
+        <button class="btn primary" id="btn-run">▶ Executar</button>
+        <button class="btn" id="btn-step">Próximo passo</button>
+        <button class="btn" id="btn-reset">Reiniciar</button>
+        <span class="spacer"></span><span class="muted" id="sim-status">pronto</span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CÓDIGO ================= -->
+<section class="view" id="view-codigo" hidden>
+  <div class="hero">
+    <span class="eyebrow">Fonte completa</span>
+    <h1>Código do workshop</h1>
+    <p class="lead">Tudo que está no pacote <code>maf-workshop/</code>. Os agentes importam o cliente de <code>_common.get_client()</code>, então trocar o provider (Foundry, Azure OpenAI, OpenAI/Ollama) não altera nenhum agente.</p>
+  </div>
+  <div class="files">
+    <div class="filelist" id="filelist"></div>
+    <div style="display:grid;gap:10px;min-width:0">
+      <div class="filehead"><code id="file-name"></code><button class="btn" id="btn-copy">Copiar</button></div>
+      <pre class="code file"><code id="file-body"></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ================= BANCO ================= -->
+<section class="view" id="view-banco" hidden>
+  <div class="hero">
+    <span class="eyebrow">PostgreSQL · schema <code>workshop</code></span>
+    <h1>Banco de demonstração</h1>
+    <p class="lead">Um schema pequeno o bastante para caber em um slide e rico o bastante para os quatro cenários: histórico de endereços, pedidos com status e uma trilha de auditoria das ações dos agentes. Sobe com <code>docker compose up -d</code>; os scripts rodam sozinhos na primeira carga.</p>
+  </div>
+  <div class="card er">
+    <svg viewBox="0 0 900 330" role="img" aria-label="Diagrama entidade-relacionamento">
+      <defs><marker id="crow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 5 L10 0 M0 5 L10 10 M0 5 L10 5" fill="none" stroke="var(--muted)" stroke-width="1.2"/></marker></defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="12">
+        <rect x="20" y="90" width="230" height="150" rx="8" fill="var(--panel2)" stroke="var(--accent)"/>
+        <rect x="20" y="90" width="230" height="28" rx="8" fill="var(--accent)"/><text x="30" y="109" fill="#fff" font-weight="600">clientes</text>
+        <text x="30" y="140" fill="var(--fg)">id            serial PK</text>
+        <text x="30" y="160" fill="var(--fg)">cpf           char(11) UQ</text>
+        <text x="30" y="180" fill="var(--fg)">nome, email, telefone</text>
+        <text x="30" y="200" fill="var(--fg)">segmento      varchar</text>
+        <text x="30" y="220" fill="var(--muted)">criado_em, atualizado_em</text>
+
+        <rect x="335" y="20" width="250" height="150" rx="8" fill="var(--panel2)" stroke="var(--accent)"/>
+        <rect x="335" y="20" width="250" height="28" rx="8" fill="var(--accent)"/><text x="345" y="39" fill="#fff" font-weight="600">enderecos</text>
+        <text x="345" y="70" fill="var(--fg)">id            serial PK</text>
+        <text x="345" y="90" fill="var(--fg)">cliente_id    FK → clientes</text>
+        <text x="345" y="110" fill="var(--fg)">cep char(8), logradouro, numero</text>
+        <text x="345" y="130" fill="var(--fg)">bairro, cidade, uf</text>
+        <text x="345" y="150" fill="var(--tool)">principal bool · origem (viacep|agente)</text>
+
+        <rect x="335" y="190" width="250" height="120" rx="8" fill="var(--panel2)" stroke="var(--accent)"/>
+        <rect x="335" y="190" width="250" height="28" rx="8" fill="var(--accent)"/><text x="345" y="209" fill="#fff" font-weight="600">pedidos</text>
+        <text x="345" y="240" fill="var(--fg)">id, codigo UQ, descricao</text>
+        <text x="345" y="260" fill="var(--fg)">cliente_id    FK → clientes</text>
+        <text x="345" y="280" fill="var(--fg)">valor numeric · status enum</text>
+        <text x="345" y="300" fill="var(--muted)">previsao_entrega date</text>
+
+        <rect x="650" y="90" width="230" height="130" rx="8" fill="var(--panel2)" stroke="var(--tool)"/>
+        <rect x="650" y="90" width="230" height="28" rx="8" fill="var(--tool)"/><text x="660" y="109" fill="#fff" font-weight="600">log_agentes</text>
+        <text x="660" y="140" fill="var(--fg)">id bigserial PK</text>
+        <text x="660" y="160" fill="var(--fg)">agente, acao</text>
+        <text x="660" y="180" fill="var(--fg)">cliente_id FK (nullable)</text>
+        <text x="660" y="200" fill="var(--fg)">detalhes jsonb · criado_em</text>
+
+        <path d="M250 150 C 290 150, 300 95, 335 95" fill="none" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#crow)"/>
+        <path d="M250 170 C 290 170, 300 260, 335 260" fill="none" stroke="var(--muted)" stroke-width="1.4" marker-end="url(#crow)"/>
+        <path d="M585 180 C 620 180, 620 180, 650 180" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#crow)"/>
+        <text x="265" y="120" fill="var(--muted)" font-size="11">1 : n</text>
+        <text x="265" y="245" fill="var(--muted)" font-size="11">1 : n</text>
+        <text x="600" y="172" fill="var(--muted)" font-size="11">0..n</text>
+      </g>
+    </svg>
+    <p class="muted" style="font-size:.9rem">A view <code>vw_cliente_resumo</code> junta cliente + endereço principal + pedidos em aberto. É o que a tool <code>buscar_cliente_por_cpf</code> lê: uma consulta, uma resposta previsível para o modelo.</p>
+  </div>
+
+  <div class="subtabs" id="db-tabs">
+    <button aria-pressed="true" data-db="dados">Dados de carga</button>
+    <button aria-pressed="false" data-db="schema">01_schema.sql</button>
+    <button aria-pressed="false" data-db="seed">02_seed.sql</button>
+    <button aria-pressed="false" data-db="compose">docker-compose.yml</button>
+    <button aria-pressed="false" data-db="setup">scripts/setup_db.py</button>
+  </div>
+  <div id="db-dados">
+    <div class="tablewrap"><table>
+      <thead><tr><th>CPF</th><th>Cliente</th><th>Segmento</th><th>Cidade/UF</th><th>CEP</th><th>Pedidos</th><th class="num">Em aberto (R$)</th></tr></thead>
+      <tbody id="seed-rows"></tbody>
+    </table></div>
+    <p class="muted" style="font-size:.85rem;margin-top:8px">12 clientes · 12 endereços principais · 16 pedidos · dados fictícios. Os CPFs usados nos exemplos: 123.456.789-01 (Ana), 567.890.123-45 (Elaine), 012.345.678-90 (João), 223.344.556-67 (Lucas).</p>
+  </div>
+  <pre class="code" id="db-schema" hidden><code class="language-sql">-- =====================================================================
+--  MAF Workshop · Esquema do banco de demonstração
+--  Domínio: cadastro de clientes, endereços e pedidos (cenário de
+--  atendimento / atualização cadastral usado pelos agentes).
+--  Compatível com PostgreSQL 14+.
+-- =====================================================================
+
+CREATE SCHEMA IF NOT EXISTS workshop;
+SET search_path TO workshop, public;
+
+-- ---------------------------------------------------------------------
+-- Tipos
+-- ---------------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = &#x27;status_pedido&#x27;) THEN
+        CREATE TYPE status_pedido AS ENUM (
+            &#x27;pendente&#x27;, &#x27;pago&#x27;, &#x27;enviado&#x27;, &#x27;entregue&#x27;, &#x27;cancelado&#x27;
+        );
+    END IF;
+END$$;
+
+-- ---------------------------------------------------------------------
+-- Clientes
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS clientes (
+    id              SERIAL PRIMARY KEY,
+    cpf             CHAR(11)      NOT NULL UNIQUE,
+    nome            VARCHAR(120)  NOT NULL,
+    email           VARCHAR(160)  NOT NULL UNIQUE,
+    telefone        VARCHAR(20),
+    segmento        VARCHAR(40)   NOT NULL DEFAULT &#x27;varejo&#x27;,
+    criado_em       TIMESTAMPTZ   NOT NULL DEFAULT now(),
+    atualizado_em   TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
+-- Endereços (1 cliente pode ter vários; um é o principal)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS enderecos (
+    id              SERIAL PRIMARY KEY,
+    cliente_id      INT          NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+    cep             CHAR(8)      NOT NULL,
+    logradouro      VARCHAR(160) NOT NULL,
+    numero          VARCHAR(10)  NOT NULL,
+    complemento     VARCHAR(60),
+    bairro          VARCHAR(80),
+    cidade          VARCHAR(80)  NOT NULL,
+    uf              CHAR(2)      NOT NULL,
+    principal       BOOLEAN      NOT NULL DEFAULT TRUE,
+    origem          VARCHAR(20)  NOT NULL DEFAULT &#x27;manual&#x27;,   -- manual | viacep | agente
+    criado_em       TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- Garante um único endereço principal por cliente
+CREATE UNIQUE INDEX IF NOT EXISTS ux_enderecos_principal
+    ON enderecos (cliente_id) WHERE principal;
+
+-- ---------------------------------------------------------------------
+-- Pedidos
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pedidos (
+    id              SERIAL PRIMARY KEY,
+    cliente_id      INT            NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+    codigo          VARCHAR(20)    NOT NULL UNIQUE,
+    descricao       VARCHAR(200)   NOT NULL,
+    valor           NUMERIC(12,2)  NOT NULL CHECK (valor &gt;= 0),
+    status          status_pedido  NOT NULL DEFAULT &#x27;pendente&#x27;,
+    criado_em       TIMESTAMPTZ    NOT NULL DEFAULT now(),
+    previsao_entrega DATE
+);
+
+CREATE INDEX IF NOT EXISTS ix_pedidos_cliente_status ON pedidos (cliente_id, status);
+
+-- ---------------------------------------------------------------------
+-- Log de ações dos agentes (trilha de auditoria da demo)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS log_agentes (
+    id              BIGSERIAL PRIMARY KEY,
+    agente          VARCHAR(60)  NOT NULL,
+    acao            VARCHAR(60)  NOT NULL,
+    cliente_id      INT          REFERENCES clientes(id) ON DELETE SET NULL,
+    detalhes        JSONB,
+    criado_em       TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
+-- Trigger: mantém atualizado_em
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION trg_set_atualizado_em() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.atualizado_em := now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS clientes_atualizado_em ON clientes;
+CREATE TRIGGER clientes_atualizado_em
+    BEFORE UPDATE ON clientes
+    FOR EACH ROW EXECUTE FUNCTION trg_set_atualizado_em();
+
+-- ---------------------------------------------------------------------
+-- View de apoio: visão consolidada do cliente (usada pelas tools)
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW vw_cliente_resumo AS
+SELECT
+    c.id,
+    c.cpf,
+    c.nome,
+    c.email,
+    c.segmento,
+    e.cep,
+    e.logradouro,
+    e.numero,
+    e.bairro,
+    e.cidade,
+    e.uf,
+    COUNT(p.id) FILTER (WHERE p.status IN (&#x27;pendente&#x27;,&#x27;pago&#x27;,&#x27;enviado&#x27;)) AS pedidos_abertos,
+    COALESCE(SUM(p.valor) FILTER (WHERE p.status IN (&#x27;pendente&#x27;,&#x27;pago&#x27;,&#x27;enviado&#x27;)), 0) AS valor_em_aberto
+FROM clientes c
+LEFT JOIN enderecos e ON e.cliente_id = c.id AND e.principal
+LEFT JOIN pedidos  p ON p.cliente_id = c.id
+GROUP BY c.id, e.cep, e.logradouro, e.numero, e.bairro, e.cidade, e.uf;
+</code></pre>
+  <pre class="code" id="db-seed" hidden><code class="language-sql">-- =====================================================================
+--  MAF Workshop · Carga de dados de demonstração
+--  Todos os dados são fictícios (CPFs e e-mails inventados).
+--  Idempotente: pode ser executado mais de uma vez.
+-- =====================================================================
+SET search_path TO workshop, public;
+
+BEGIN;
+
+-- ---------------------------------------------------------------------
+-- Clientes
+-- ---------------------------------------------------------------------
+INSERT INTO clientes (cpf, nome, email, telefone, segmento) VALUES
+    (&#x27;12345678901&#x27;, &#x27;Ana Beatriz Moura&#x27;,      &#x27;ana.moura@exemplo.com.br&#x27;,      &#x27;11988887771&#x27;, &#x27;varejo&#x27;),
+    (&#x27;23456789012&#x27;, &#x27;Bruno Carvalho Lima&#x27;,    &#x27;bruno.lima@exemplo.com.br&#x27;,     &#x27;11988887772&#x27;, &#x27;varejo&#x27;),
+    (&#x27;34567890123&#x27;, &#x27;Carla Fernandes Souza&#x27;,  &#x27;carla.souza@exemplo.com.br&#x27;,    &#x27;21988887773&#x27;, &#x27;premium&#x27;),
+    (&#x27;45678901234&#x27;, &#x27;Diego Martins Rocha&#x27;,    &#x27;diego.rocha@exemplo.com.br&#x27;,    &#x27;21988887774&#x27;, &#x27;varejo&#x27;),
+    (&#x27;56789012345&#x27;, &#x27;Elaine Pereira Castro&#x27;,  &#x27;elaine.castro@exemplo.com.br&#x27;,  &#x27;31988887775&#x27;, &#x27;premium&#x27;),
+    (&#x27;67890123456&#x27;, &#x27;Fábio Nogueira Alves&#x27;,   &#x27;fabio.alves@exemplo.com.br&#x27;,    &#x27;41988887776&#x27;, &#x27;corporativo&#x27;),
+    (&#x27;78901234567&#x27;, &#x27;Gabriela Santos Reis&#x27;,   &#x27;gabriela.reis@exemplo.com.br&#x27;,  &#x27;51988887777&#x27;, &#x27;varejo&#x27;),
+    (&#x27;89012345678&#x27;, &#x27;Henrique Oliveira Dias&#x27;, &#x27;henrique.dias@exemplo.com.br&#x27;,  &#x27;71988887778&#x27;, &#x27;corporativo&#x27;),
+    (&#x27;90123456789&#x27;, &#x27;Isabela Costa Ramos&#x27;,    &#x27;isabela.ramos@exemplo.com.br&#x27;,  &#x27;81988887779&#x27;, &#x27;varejo&#x27;),
+    (&#x27;01234567890&#x27;, &#x27;João Pedro Azevedo&#x27;,     &#x27;joao.azevedo@exemplo.com.br&#x27;,   &#x27;11988887780&#x27;, &#x27;premium&#x27;),
+    (&#x27;11223344556&#x27;, &#x27;Karina Lopes Barbosa&#x27;,   &#x27;karina.barbosa@exemplo.com.br&#x27;, &#x27;11988887781&#x27;, &#x27;varejo&#x27;),
+    (&#x27;22334455667&#x27;, &#x27;Lucas Teixeira Mendes&#x27;,  &#x27;lucas.mendes@exemplo.com.br&#x27;,   &#x27;85988887782&#x27;, &#x27;varejo&#x27;)
+ON CONFLICT (cpf) DO UPDATE
+    SET nome = EXCLUDED.nome, email = EXCLUDED.email, telefone = EXCLUDED.telefone;
+
+-- ---------------------------------------------------------------------
+-- Endereços principais (um por cliente)
+-- ---------------------------------------------------------------------
+INSERT INTO enderecos (cliente_id, cep, logradouro, numero, complemento, bairro, cidade, uf, origem)
+SELECT c.id, v.cep, v.logradouro, v.numero, v.complemento, v.bairro, v.cidade, v.uf, &#x27;manual&#x27;
+FROM (VALUES
+    (&#x27;12345678901&#x27;, &#x27;01310100&#x27;, &#x27;Avenida Paulista&#x27;,                 &#x27;1578&#x27;, &#x27;Conj. 12&#x27;, &#x27;Bela Vista&#x27;,        &#x27;São Paulo&#x27;,      &#x27;SP&#x27;),
+    (&#x27;23456789012&#x27;, &#x27;04538132&#x27;, &#x27;Avenida Brigadeiro Faria Lima&#x27;,    &#x27;3477&#x27;, NULL,       &#x27;Itaim Bibi&#x27;,        &#x27;São Paulo&#x27;,      &#x27;SP&#x27;),
+    (&#x27;34567890123&#x27;, &#x27;20040020&#x27;, &#x27;Avenida Rio Branco&#x27;,               &#x27;156&#x27;,  &#x27;Sala 801&#x27;, &#x27;Centro&#x27;,            &#x27;Rio de Janeiro&#x27;, &#x27;RJ&#x27;),
+    (&#x27;45678901234&#x27;, &#x27;22250040&#x27;, &#x27;Praia de Botafogo&#x27;,                &#x27;300&#x27;,  NULL,       &#x27;Botafogo&#x27;,          &#x27;Rio de Janeiro&#x27;, &#x27;RJ&#x27;),
+    (&#x27;56789012345&#x27;, &#x27;30130010&#x27;, &#x27;Avenida Afonso Pena&#x27;,              &#x27;1500&#x27;, &#x27;Apto 702&#x27;, &#x27;Centro&#x27;,            &#x27;Belo Horizonte&#x27;, &#x27;MG&#x27;),
+    (&#x27;67890123456&#x27;, &#x27;80020310&#x27;, &#x27;Rua XV de Novembro&#x27;,               &#x27;362&#x27;,  NULL,       &#x27;Centro&#x27;,            &#x27;Curitiba&#x27;,       &#x27;PR&#x27;),
+    (&#x27;78901234567&#x27;, &#x27;90010150&#x27;, &#x27;Rua dos Andradas&#x27;,                 &#x27;1001&#x27;, NULL,       &#x27;Centro Histórico&#x27;,  &#x27;Porto Alegre&#x27;,   &#x27;RS&#x27;),
+    (&#x27;89012345678&#x27;, &#x27;40020000&#x27;, &#x27;Rua Chile&#x27;,                        &#x27;22&#x27;,   &#x27;Loja 3&#x27;,   &#x27;Centro&#x27;,            &#x27;Salvador&#x27;,       &#x27;BA&#x27;),
+    (&#x27;90123456789&#x27;, &#x27;50030230&#x27;, &#x27;Rua do Bom Jesus&#x27;,                 &#x27;125&#x27;,  NULL,       &#x27;Recife&#x27;,            &#x27;Recife&#x27;,         &#x27;PE&#x27;),
+    (&#x27;01234567890&#x27;, &#x27;01001000&#x27;, &#x27;Praça da Sé&#x27;,                      &#x27;1&#x27;,    NULL,       &#x27;Sé&#x27;,                &#x27;São Paulo&#x27;,      &#x27;SP&#x27;),
+    (&#x27;11223344556&#x27;, &#x27;05407002&#x27;, &#x27;Rua dos Pinheiros&#x27;,                &#x27;870&#x27;,  &#x27;Casa 2&#x27;,   &#x27;Pinheiros&#x27;,         &#x27;São Paulo&#x27;,      &#x27;SP&#x27;),
+    (&#x27;22334455667&#x27;, &#x27;60060300&#x27;, &#x27;Rua Barão do Rio Branco&#x27;,          &#x27;1200&#x27;, NULL,       &#x27;Centro&#x27;,            &#x27;Fortaleza&#x27;,      &#x27;CE&#x27;)
+) AS v(cpf, cep, logradouro, numero, complemento, bairro, cidade, uf)
+JOIN clientes c ON c.cpf = v.cpf
+WHERE NOT EXISTS (SELECT 1 FROM enderecos e WHERE e.cliente_id = c.id AND e.principal);
+
+-- ---------------------------------------------------------------------
+-- Pedidos (mistura de status para os cenários)
+-- ---------------------------------------------------------------------
+INSERT INTO pedidos (cliente_id, codigo, descricao, valor, status, criado_em, previsao_entrega)
+SELECT c.id, v.codigo, v.descricao, v.valor, v.status::status_pedido, v.criado_em::timestamptz, v.previsao::date
+FROM (VALUES
+    (&#x27;12345678901&#x27;, &#x27;PED-2026-0001&#x27;, &#x27;Notebook 14&quot; 16GB&#x27;,            4899.90, &#x27;enviado&#x27;,   &#x27;2026-10-10 09:12&#x27;, &#x27;2026-10-24&#x27;),
+    (&#x27;12345678901&#x27;, &#x27;PED-2026-0002&#x27;, &#x27;Mouse sem fio&#x27;,                 189.00, &#x27;entregue&#x27;,  &#x27;2026-09-02 14:30&#x27;, &#x27;2026-09-08&#x27;),
+    (&#x27;23456789012&#x27;, &#x27;PED-2026-0003&#x27;, &#x27;Monitor 27&quot; 4K&#x27;,               2399.00, &#x27;pendente&#x27;,  &#x27;2026-10-20 18:05&#x27;, &#x27;2026-10-30&#x27;),
+    (&#x27;34567890123&#x27;, &#x27;PED-2026-0004&#x27;, &#x27;Cadeira ergonômica&#x27;,           1899.00, &#x27;pago&#x27;,      &#x27;2026-10-18 11:40&#x27;, &#x27;2026-10-28&#x27;),
+    (&#x27;34567890123&#x27;, &#x27;PED-2026-0005&#x27;, &#x27;Suporte para monitor&#x27;,          249.90, &#x27;entregue&#x27;,  &#x27;2026-08-15 10:00&#x27;, &#x27;2026-08-20&#x27;),
+    (&#x27;45678901234&#x27;, &#x27;PED-2026-0006&#x27;, &#x27;Teclado mecânico&#x27;,              699.00, &#x27;cancelado&#x27;, &#x27;2026-10-01 16:20&#x27;, NULL),
+    (&#x27;56789012345&#x27;, &#x27;PED-2026-0007&#x27;, &#x27;Headset Bluetooth&#x27;,             899.00, &#x27;enviado&#x27;,   &#x27;2026-10-15 08:00&#x27;, &#x27;2026-10-23&#x27;),
+    (&#x27;56789012345&#x27;, &#x27;PED-2026-0008&#x27;, &#x27;Webcam Full HD&#x27;,                349.00, &#x27;enviado&#x27;,   &#x27;2026-10-15 08:00&#x27;, &#x27;2026-10-23&#x27;),
+    (&#x27;67890123456&#x27;, &#x27;PED-2026-0009&#x27;, &#x27;Servidor rack 1U&#x27;,            18900.00, &#x27;pago&#x27;,      &#x27;2026-10-19 13:15&#x27;, &#x27;2026-11-05&#x27;),
+    (&#x27;78901234567&#x27;, &#x27;PED-2026-0010&#x27;, &#x27;Tablet 11&quot;&#x27;,                   3299.00, &#x27;entregue&#x27;,  &#x27;2026-07-22 12:00&#x27;, &#x27;2026-07-29&#x27;),
+    (&#x27;89012345678&#x27;, &#x27;PED-2026-0011&#x27;, &#x27;Licença software anual&#x27;,       5400.00, &#x27;pago&#x27;,      &#x27;2026-10-05 09:00&#x27;, NULL),
+    (&#x27;90123456789&#x27;, &#x27;PED-2026-0012&#x27;, &#x27;Impressora multifuncional&#x27;,    1299.00, &#x27;pendente&#x27;,  &#x27;2026-10-21 20:45&#x27;, &#x27;2026-10-31&#x27;),
+    (&#x27;01234567890&#x27;, &#x27;PED-2026-0013&#x27;, &#x27;Smartphone 256GB&#x27;,             4299.00, &#x27;enviado&#x27;,   &#x27;2026-10-17 15:10&#x27;, &#x27;2026-10-25&#x27;),
+    (&#x27;01234567890&#x27;, &#x27;PED-2026-0014&#x27;, &#x27;Capa protetora&#x27;,                 99.90, &#x27;entregue&#x27;,  &#x27;2026-10-02 15:10&#x27;, &#x27;2026-10-06&#x27;),
+    (&#x27;11223344556&#x27;, &#x27;PED-2026-0015&#x27;, &#x27;Smartwatch&#x27;,                   1599.00, &#x27;pendente&#x27;,  &#x27;2026-10-22 09:30&#x27;, &#x27;2026-11-01&#x27;),
+    (&#x27;22334455667&#x27;, &#x27;PED-2026-0016&#x27;, &#x27;Caixa de som portátil&#x27;,         459.00, &#x27;entregue&#x27;,  &#x27;2026-09-12 17:00&#x27;, &#x27;2026-09-18&#x27;)
+) AS v(cpf, codigo, descricao, valor, status, criado_em, previsao)
+JOIN clientes c ON c.cpf = v.cpf
+ON CONFLICT (codigo) DO NOTHING;
+
+COMMIT;
+
+-- Conferência rápida
+SELECT &#x27;clientes&#x27;  AS tabela, COUNT(*) FROM clientes
+UNION ALL SELECT &#x27;enderecos&#x27;, COUNT(*) FROM enderecos
+UNION ALL SELECT &#x27;pedidos&#x27;,   COUNT(*) FROM pedidos;
+</code></pre>
+  <pre class="code" id="db-compose" hidden><code class="language-yaml">services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: maf-workshop-db
+    environment:
+      POSTGRES_USER: maf
+      POSTGRES_PASSWORD: maf
+      POSTGRES_DB: workshop
+    ports:
+      - &quot;5432:5432&quot;
+    volumes:
+      # Scripts em /docker-entrypoint-initdb.d rodam na ordem alfabética
+      # na PRIMEIRA subida do volume (01_schema -&gt; 02_seed).
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - maf_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U maf -d workshop&quot;]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  maf_pgdata:
+</code></pre>
+  <pre class="code" id="db-setup" hidden><code class="language-python">&quot;&quot;&quot;
+Cria o esquema e carrega os dados de demonstração em um PostgreSQL
+já existente (alternativa ao docker-compose, para quem tem um
+Postgres local, Azure Database for PostgreSQL etc.).
+
+Uso:
+    python scripts/setup_db.py            # usa DATABASE_URL do .env
+    python scripts/setup_db.py --reset    # dropa o schema antes
+
+DATABASE_URL no formato:
+    postgresql://usuario:senha@host:5432/workshop
+&quot;&quot;&quot;
+
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+import psycopg
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parents[1]
+SQL_DIR = ROOT / &quot;sql&quot;
+
+
+def main() -&gt; int:
+    load_dotenv(ROOT / &quot;.env&quot;)
+
+    parser = argparse.ArgumentParser(description=&quot;Cria e popula o banco do workshop.&quot;)
+    parser.add_argument(&quot;--reset&quot;, action=&quot;store_true&quot;, help=&quot;dropa o schema &#x27;workshop&#x27; antes de recriar&quot;)
+    args = parser.parse_args()
+
+    url = os.getenv(&quot;DATABASE_URL&quot;)
+    if not url:
+        print(&quot;DATABASE_URL não definida. Veja .env.example.&quot;, file=sys.stderr)
+        return 1
+
+    scripts = sorted(SQL_DIR.glob(&quot;*.sql&quot;))
+    if not scripts:
+        print(f&quot;Nenhum .sql encontrado em {SQL_DIR}&quot;, file=sys.stderr)
+        return 1
+
+    with psycopg.connect(url, autocommit=True) as conn:
+        if args.reset:
+            print(&quot;• Removendo schema &#x27;workshop&#x27;…&quot;)
+            conn.execute(&quot;DROP SCHEMA IF EXISTS workshop CASCADE&quot;)
+
+        for script in scripts:
+            print(f&quot;• Executando {script.name}…&quot;)
+            conn.execute(script.read_text(encoding=&quot;utf-8&quot;))
+
+        with conn.cursor() as cur:
+            cur.execute(&quot;SET search_path TO workshop&quot;)
+            cur.execute(
+                &quot;&quot;&quot;
+                SELECT &#x27;clientes&#x27;, COUNT(*) FROM clientes
+                UNION ALL SELECT &#x27;enderecos&#x27;, COUNT(*) FROM enderecos
+                UNION ALL SELECT &#x27;pedidos&#x27;, COUNT(*) FROM pedidos
+                &quot;&quot;&quot;
+            )
+            for tabela, total in cur.fetchall():
+                print(f&quot;  {tabela:&lt;10} {total:&gt;4} linhas&quot;)
+
+    print(&quot;✔ Banco pronto.&quot;)
+    return 0
+
+
+if __name__ == &quot;__main__&quot;:
+    raise SystemExit(main())
+</code></pre>
+</section>
+
+<!-- ================= COMPARATIVO ================= -->
+<section class="view" id="view-comparativo" hidden>
+  <div class="hero">
+    <span class="eyebrow">Etapa 3 · Flexibilidade</span>
+    <h1>Microsoft Agent Framework × Google ADK</h1>
+    <p class="lead">Os dois resolvem o mesmo problema com arquiteturas parecidas. A diferença de verdade está em onde mora o resto da sua casa: identidade, rede, dados, time e linguagem. Abaixo, o mesmo "hello agent" lado a lado e um comparativo sem superlativos.</p>
+  </div>
+  <div class="two">
+    <div style="display:grid;gap:8px;min-width:0"><span class="eyebrow">MAF · Python</span>
+<pre class="code"><code class="language-python">from agent_framework import Agent
+from agent_framework.foundry import FoundryChatClient
+from azure.identity import AzureCliCredential
+
+agent = Agent(
+    client=FoundryChatClient(
+        project_endpoint=ENDPOINT,
+        model="gpt-4o-mini",
+        credential=AzureCliCredential(),
+    ),
+    name="Atendente",
+    instructions="Responda em português.",
+    tools=[consultar_cep],
+)
+result = await agent.run("O CEP 01310-100 existe?")</code></pre></div>
+    <div style="display:grid;gap:8px;min-width:0"><span class="eyebrow">Google ADK · Python</span>
+<pre class="code"><code class="language-python">from google.adk.agents import LlmAgent
+from google.adk.runners import InMemoryRunner
+
+agent = LlmAgent(
+    name="atendente",
+    model="gemini-2.5-flash",
+    instruction="Responda em português.",
+    tools=[consultar_cep],
+)
+runner = InMemoryRunner(agent=agent)
+# session + run_async(...) para obter os eventos</code></pre></div>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>Microsoft Agent Framework</th><th>Google ADK</th></tr></thead>
+    <tbody>
+      <tr><td>Licença · linguagens</td><td>MIT · Python, .NET</td><td>Apache 2.0 · Python, TypeScript, Go, Java</td></tr>
+      <tr><td>Modelo "de casa"</td><td>Foundry (OpenAI, Anthropic, Mistral, Llama, Phi…) e qualquer provider via client</td><td>Gemini nativo; outros via LiteLLM</td></tr>
+      <tr><td>Orquestração</td><td>Sequential, Concurrent, Handoff, Group Chat, Magentic + grafos (WorkflowBuilder)</td><td>SequentialAgent, ParallelAgent, LoopAgent + roteamento por LLM (sub_agents)</td></tr>
+      <tr><td>Protocolos</td><td>MCP, A2A</td><td>MCP, A2A</td></tr>
+      <tr><td>Deploy gerenciado</td><td>Foundry Hosted Agents, Azure Functions, Durable Task</td><td>Vertex AI Agent Engine, Cloud Run</td></tr>
+      <tr><td>Dev UI local</td><td>DevUI, Aspire Dashboard</td><td>ADK Web</td></tr>
+      <tr><td>Observabilidade</td><td>OpenTelemetry (GenAI semconv) → Foundry/App Insights, Langfuse, qualquer OTLP</td><td>OpenTelemetry → Cloud Trace, Langfuse, qualquer OTLP</td></tr>
+      <tr><td>Herança</td><td>Semantic Kernel + AutoGen (um sucessor, não um terceiro)</td><td>Novo (2025), nascido para Gemini/Vertex</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">Frase para fechar a etapa: a escolha quase nunca é técnica. Os dois são bons; o MAF ganha quando o resto da casa é Azure/M365, quando você precisa de .NET, e quando a observabilidade precisa cair no mesmo monitor que o resto da plataforma.</div>
+</section>
+
+<!-- ================= OBSERVABILIDADE ================= -->
+<section class="view" id="view-observabilidade" hidden>
+  <div class="hero">
+    <span class="eyebrow">Etapa 6</span>
+    <h1>O agente que você não enxerga não vai para produção</h1>
+    <p class="lead">A telemetria é OpenTelemetry com as convenções GenAI. O mesmo código do cenário 1 roda instrumentado; só o destino muda por variável de ambiente. No Foundry, o trace aparece em <em>Build ▸ Agents ▸ Traces</em> e as métricas em <em>Monitor</em>.</p>
+  </div>
+  <div class="grid">
+    <div class="card"><span class="eyebrow">OBS_TARGET=console</span><h3>Terminal</h3><p class="muted">Spans impressos. Zero setup; bom para depurar uma tool.</p></div>
+    <div class="card"><span class="eyebrow">OBS_TARGET=aspire</span><h3>Aspire Dashboard</h3><p class="muted">Container local, OTLP em :4317, UI em :18888. Ideal para dev sem Azure.</p></div>
+    <div class="card"><span class="eyebrow">OBS_TARGET=foundry</span><h3>Foundry / App Insights</h3><p class="muted"><code>client.configure_azure_monitor()</code> descobre a connection string do projeto.</p></div>
+  </div>
+  <div><span class="eyebrow">O que você vê no trace do cenário 1</span>
+  <div class="trace" style="margin-top:8px" id="trace"></div></div>
+  <div class="two">
+<pre class="code"><code class="language-python"># agents/07_observability.py (trecho)
+from agent_framework.observability import configure_otel_providers, get_tracer
+
+client = get_client()
+if OBS_TARGET == "foundry":
+    client.configure_azure_monitor(enable_sensitive_data=True)
+else:
+    configure_otel_providers(enable_sensitive_data=True)
+
+tracer = get_tracer()
+with tracer.start_as_current_span("atendimento.atualizacao_cadastral") as span:
+    span.set_attribute("workshop.cenario", "atualizacao_cadastral")
+    async for event in workflow.run(entrada, stream=True):
+        ...</code></pre>
+    <div class="card">
+      <h3>Pontos para a fala</h3>
+      <ul style="margin:0;padding-left:18px;display:grid;gap:6px">
+        <li>Um span pai por requisição de negócio; abaixo dele, workflow → agente → modelo → tool, com tokens e latência por nó.</li>
+        <li><code>enable_sensitive_data=True</code> grava prompts e respostas nos spans. Ótimo em demo, decisão de governança em produção.</li>
+        <li>A tabela <code>log_agentes</code> é a trilha de auditoria no banco; o trace é a trilha técnica. Em ambiente regulado, as duas se complementam.</li>
+        <li>Agente rodando fora do Azure? Registre como <em>custom agent</em> no Foundry e envie com o mesmo <code>gen_ai.agent.id</code>; aparece no mesmo monitor.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>MAF Workshop · material de apoio da palestra · código em <code>maf-workshop/</code> · dados fictícios</footer>
+</div></main>
+
+<script>
+/* ---------- fontes embutidas ---------- */
+const FILES = {
+  "agents/_common.py": "\"\"\"\nUtilitários compartilhados pelos exemplos.\n\nA ideia central desta função é o argumento de \"flexibilidade\" da\napresentação: o agente não é acoplado ao modelo. Trocar o provider\né trocar o objeto `client`; instruções, tools e workflows não mudam.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport sys\nfrom pathlib import Path\n\nfrom dotenv import load_dotenv\n\n# Permite `python agents/03_...py` a partir da raiz do projeto\nROOT = Path(__file__).resolve().parents[1]\nif str(ROOT) not in sys.path:\n    sys.path.insert(0, str(ROOT))\n\nload_dotenv(ROOT / \".env\")\n\n\ndef get_client():\n    \"\"\"Retorna um chat client conforme MODEL_PROVIDER (foundry | azure-openai | openai).\n\n    - foundry       : modelo implantado em um projeto do Microsoft Foundry (padrão da demo)\n    - azure-openai  : recurso Azure OpenAI direto (endpoint + deployment)\n    - openai        : API da OpenAI (ou endpoint compatível, ex.: Ollama/vLLM)\n    \"\"\"\n    provider = os.getenv(\"MODEL_PROVIDER\", \"foundry\").lower()\n\n    if provider == \"foundry\":\n        from agent_framework.foundry import FoundryChatClient\n        from azure.identity import AzureCliCredential\n\n        return FoundryChatClient(\n            project_endpoint=os.environ[\"FOUNDRY_PROJECT_ENDPOINT\"],\n            model=os.environ[\"FOUNDRY_MODEL\"],\n            credential=AzureCliCredential(),\n        )\n\n    if provider == \"azure-openai\":\n        from agent_framework.azure import AzureOpenAIChatClient\n        from azure.identity import AzureCliCredential\n\n        return AzureOpenAIChatClient(\n            endpoint=os.environ[\"AZURE_OPENAI_ENDPOINT\"],\n            deployment_name=os.environ[\"AZURE_OPENAI_DEPLOYMENT\"],\n            credential=AzureCliCredential(),\n        )\n\n    if provider == \"openai\":\n        from agent_framework.openai import OpenAIChatClient\n\n        return OpenAIChatClient(\n            model_id=os.environ.get(\"OPENAI_MODEL\", \"gpt-4o-mini\"),\n            api_key=os.environ.get(\"OPENAI_API_KEY\"),\n            base_url=os.environ.get(\"OPENAI_BASE_URL\"),  # ex.: http://localhost:11434/v1 (Ollama)\n        )\n\n    raise ValueError(f\"MODEL_PROVIDER desconhecido: {provider}\")\n\n\ndef banner(titulo: str) -> None:\n    print(\"\\n\" + \"=\" * 72)\n    print(f\" {titulo}\")\n    print(\"=\" * 72)\n",
+  "agents/01_hello_agent.py": "\"\"\"\nEtapa 1 · Hello Agent\nO menor agente possível: cliente + instruções + run().\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework import Agent\n\nfrom _common import banner, get_client\n\n\nasync def main() -> None:\n    agent = Agent(\n        client=get_client(),\n        name=\"HelloAgent\",\n        instructions=\"Você é um assistente direto. Responda em português, em no máximo 2 frases.\",\n    )\n\n    banner(\"01 · Hello Agent\")\n    result = await agent.run(\"Explique o que é um agente de IA para quem já programa.\")\n    print(result)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/02_agent_tools.py": "\"\"\"\nEtapa 2 · Agente com tools\nUma função Python comum (ViaCEP) e uma de banco (Postgres) viram tools\nsó com type hints + docstring. O agente decide quando chamar cada uma.\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework import Agent\n\nfrom _common import banner, get_client\nfrom tools import buscar_cliente_por_cpf, consultar_cep, listar_pedidos_cliente\n\n\nasync def main() -> None:\n    agent = Agent(\n        client=get_client(),\n        name=\"AtendenteCadastro\",\n        instructions=(\n            \"Você é um atendente de cadastro. Use as ferramentas antes de responder: \"\n            \"consulte o cliente pelo CPF e valide CEPs no ViaCEP. \"\n            \"Nunca invente dados. Responda em português, de forma objetiva.\"\n        ),\n        tools=[consultar_cep, buscar_cliente_por_cpf, listar_pedidos_cliente],\n    )\n\n    banner(\"02 · Agente com tools (ViaCEP + Postgres)\")\n\n    perguntas = [\n        \"Qual é o endereço cadastrado do cliente com CPF 123.456.789-01 e ele tem pedidos em aberto?\",\n        \"O CEP 04538-132 existe? De que bairro e cidade é?\",\n    ]\n    for pergunta in perguntas:\n        print(f\"\\n> {pergunta}\")\n        result = await agent.run(pergunta)\n        print(result)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/03_sequential_atualizacao_cadastral.py": "\"\"\"\nEtapa 5 · Orquestração SEQUENCIAL — cenário \"Atualização cadastral\"\n\nPipeline de 3 agentes, cada um recebe a conversa acumulada do anterior:\n\n  [1] validador_endereco  ── ViaCEP ──▶ confirma o CEP e completa o endereço\n  [2] analista_cadastro   ── Postgres ─▶ localiza o cliente, verifica entregas em\n                                        andamento e grava o novo endereço principal\n  [3] comunicador         ─────────────▶ redige a resposta final ao cliente/atendente\n\nPor que sequencial? Porque a ordem importa: não se grava endereço sem\nvalidar o CEP, e não se avisa o cliente antes de gravar.\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework.orchestrations import SequentialBuilder\n\nfrom _common import banner, get_client\nfrom tools import (\n    atualizar_endereco_cliente,\n    buscar_cliente_por_cpf,\n    consultar_cep,\n    listar_pedidos_cliente,\n    registrar_log_agente,\n)\n\n\ndef build_workflow(client):\n    validador = client.as_agent(\n        name=\"validador_endereco\",\n        instructions=(\n            \"Você valida endereços. Extraia o CEP e o número informados pelo cliente, \"\n            \"consulte o CEP no ViaCEP com a ferramenta consultar_cep e devolva o endereço \"\n            \"completo (cep, logradouro, número, complemento, bairro, cidade, uf) em uma lista clara. \"\n            \"Se o CEP não existir, diga isso explicitamente e NÃO invente um endereço.\"\n        ),\n        tools=[consultar_cep],\n    )\n\n    analista = client.as_agent(\n        name=\"analista_cadastro\",\n        instructions=(\n            \"Você é analista de cadastro. Com base no endereço validado na mensagem anterior: \"\n            \"1) busque o cliente pelo CPF com buscar_cliente_por_cpf; \"\n            \"2) liste os pedidos em aberto com listar_pedidos_cliente; \"\n            \"3) se o CEP foi validado, grave o novo endereço principal com atualizar_endereco_cliente; \"\n            \"4) relate em tópicos: cliente encontrado?, endereço anterior, endereço novo, \"\n            \"pedidos em aberto que podem ser afetados (código, status, previsão). \"\n            \"Se o CEP não foi validado, NÃO altere nada e explique o motivo.\"\n        ),\n        tools=[buscar_cliente_por_cpf, listar_pedidos_cliente, atualizar_endereco_cliente],\n    )\n\n    comunicador = client.as_agent(\n        name=\"comunicador\",\n        instructions=(\n            \"Você escreve a resposta final para o atendente enviar ao cliente. \"\n            \"Tom cordial e direto, em português. Confirme o endereço atualizado, \"\n            \"alerte sobre pedidos já enviados (que seguirão para o endereço antigo) \"\n            \"e registre um resumo da interação com registrar_log_agente \"\n            \"(agente='comunicador', acao='resumo_enviado').\"\n        ),\n        tools=[registrar_log_agente],\n    )\n\n    return (\n        SequentialBuilder(\n            participants=[validador, analista, comunicador],\n            # mostra o que cada etapa produziu, não só a última\n            intermediate_output_from=[validador, analista],\n        ).build()\n    )\n\n\nasync def main() -> None:\n    workflow = build_workflow(get_client())\n\n    pedido_cliente = (\n        \"Sou a Ana Beatriz Moura, CPF 123.456.789-01. Mudei de endereço: \"\n        \"agora moro no CEP 04538-132, número 3477, torre B, apto 1201. \"\n        \"Podem atualizar meu cadastro?\"\n    )\n\n    banner(\"03 · Sequencial · Atualização cadastral (ViaCEP → Postgres → resposta)\")\n    print(f\"\\n> {pedido_cliente}\\n\")\n\n    async for event in workflow.run(pedido_cliente, stream=True):\n        if event.type == \"executor_invoked\":\n            print(f\"\\n▶ iniciando {event.executor_id}\")\n        elif event.type == \"intermediate\":\n            print(f\"\\n[{event.executor_id}] saída intermediária:\\n{_texto(event.data)}\")\n        elif event.type == \"output\":\n            print(f\"\\n✔ RESPOSTA FINAL:\\n{_texto(event.data)}\")\n        elif event.type == \"error\":\n            print(f\"\\n✖ erro: {event.data}\")\n\n\ndef _texto(data) -> str:\n    \"\"\"AgentResponse → texto da última mensagem; qualquer outra coisa → str().\"\"\"\n    messages = getattr(data, \"messages\", None)\n    if messages:\n        return messages[-1].text or \"\"\n    return str(data)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/04_sequential_relatorio_regional.py": "\"\"\"\nEtapa 5 (bis) · Orquestração SEQUENCIAL — cenário \"Relatório regional\"\n\nMesmo padrão, outro problema: pipeline analítico em vez de transacional.\n\n  [1] extrator   ── Postgres ──▶ agrega pedidos por UF (tool relatorio_pedidos_por_uf)\n  [2] analista   ─────────────▶ interpreta: concentração, ticket médio, outliers\n  [3] redator    ─────────────▶ escreve um resumo executivo em markdown\n\nMostra também o \"workflow como agente\": o pipeline inteiro exposto pela\ninterface de um agente comum (run / stream), o que permite plugá-lo como\ntool de outro agente ou expô-lo via A2A.\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework.orchestrations import SequentialBuilder\n\nfrom _common import banner, get_client\nfrom tools import relatorio_pedidos_por_uf\n\n\ndef build_workflow(client):\n    extrator = client.as_agent(\n        name=\"extrator\",\n        instructions=(\n            \"Você extrai dados. Chame relatorio_pedidos_por_uf com o filtro de status \"\n            \"pedido pelo usuário (ou 'todos') e devolva a tabela EXATAMENTE como veio, \"\n            \"sem interpretar.\"\n        ),\n        tools=[relatorio_pedidos_por_uf],\n    )\n    analista = client.as_agent(\n        name=\"analista\",\n        instructions=(\n            \"Você é analista de dados. A partir da tabela anterior, aponte em tópicos: \"\n            \"a UF que concentra mais valor, o maior ticket médio, UFs com apenas 1 pedido \"\n            \"(amostra pequena) e uma hipótese para cada observação. Não invente números.\"\n        ),\n    )\n    redator = client.as_agent(\n        name=\"redator\",\n        instructions=(\n            \"Você escreve para executivos. Transforme a análise anterior em um resumo \"\n            \"markdown com título, 3 bullets de destaque e uma recomendação de 1 frase.\"\n        ),\n    )\n    return SequentialBuilder(participants=[extrator, analista, redator]).build()\n\n\nasync def main() -> None:\n    workflow = build_workflow(get_client())\n\n    # O workflow inteiro vira um agente: quem chama não sabe que há 3 etapas dentro.\n    pipeline = workflow.as_agent(name=\"RelatorioRegional\")\n\n    banner(\"04 · Sequencial · Relatório regional (Postgres → análise → redação)\")\n\n    autor_atual = None\n    async for update in pipeline.run(\"Gere o relatório de pedidos por UF considerando todos os status.\", stream=True):\n        if update.author_name and update.author_name != autor_atual:\n            autor_atual = update.author_name\n            print(f\"\\n\\n[{autor_atual}]\")\n        if update.text:\n            print(update.text, end=\"\", flush=True)\n    print()\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/05_handoff_atendimento.py": "\"\"\"\nEtapa 5 (ter) · Orquestração HANDOFF — cenário \"Atendimento com triagem\"\n\nAqui a ORDEM NÃO é fixa: o agente de triagem lê a mensagem e passa o bastão\npara o especialista certo. Cada especialista tem só as tools do seu domínio.\n\n           ┌──────────┐   handoff   ┌──────────────┐\n  usuário ─▶ triagem  ├────────────▶│ cadastro     │  consultar_cep, buscar_cliente, atualizar_endereco\n           │          ├────────────▶│ pedidos      │  listar_pedidos, buscar_cliente\n           └──────────┘             └──────────────┘\n\nSequencial = VOCÊ decide a ordem.  Handoff = o LLM decide quem atende.\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework.orchestrations import HandoffBuilder\n\nfrom _common import banner, get_client\nfrom tools import (\n    atualizar_endereco_cliente,\n    buscar_cliente_por_cpf,\n    consultar_cep,\n    listar_pedidos_cliente,\n)\n\n\ndef build_workflow(client):\n    triagem = client.as_agent(\n        name=\"triagem\",\n        instructions=(\n            \"Você é a triagem do atendimento. Leia a mensagem e transfira para o \"\n            \"especialista adequado: 'cadastro' para endereço/dados pessoais, \"\n            \"'pedidos' para status/entrega/valores. Não responda ao mérito; apenas encaminhe. \"\n            \"Se a mensagem não for sobre nenhum dos dois, responda educadamente que só \"\n            \"atende cadastro e pedidos.\"\n        ),\n    )\n    cadastro = client.as_agent(\n        name=\"cadastro\",\n        instructions=(\n            \"Especialista em cadastro. Valide CEPs com consultar_cep antes de qualquer \"\n            \"atualização, localize o cliente pelo CPF e só então use atualizar_endereco_cliente. \"\n            \"Encerre com um resumo do que foi feito.\"\n        ),\n        tools=[consultar_cep, buscar_cliente_por_cpf, atualizar_endereco_cliente],\n    )\n    pedidos = client.as_agent(\n        name=\"pedidos\",\n        instructions=(\n            \"Especialista em pedidos. Localize o cliente pelo CPF e liste os pedidos com \"\n            \"listar_pedidos_cliente. Responda com código, status e previsão de entrega. \"\n            \"Nunca altere dados.\"\n        ),\n        tools=[buscar_cliente_por_cpf, listar_pedidos_cliente],\n    )\n\n    return (\n        HandoffBuilder(\n            name=\"atendimento_handoff\",\n            participants=[triagem, cadastro, pedidos],\n        )\n        .with_start_agent(triagem)\n        # modo autônomo: os agentes seguem sem esperar nova entrada humana\n        # (ideal para demo; em produção, use turn_limits ou request_info)\n        .with_autonomous_mode(turn_limits={\"triagem\": 2, \"cadastro\": 4, \"pedidos\": 3})\n        .build()\n    )\n\n\nasync def main() -> None:\n    workflow = build_workflow(get_client())\n    banner(\"05 · Handoff · Atendimento com triagem\")\n\n    mensagens = [\n        \"Oi, meu CPF é 567.890.123-45. Meus dois pedidos já saíram para entrega? Quando chegam?\",\n        \"Mudei para o CEP 01001-000, número 1, CPF 223.344.556-67. Atualiza meu cadastro por favor.\",\n    ]\n\n    for msg in mensagens:\n        print(f\"\\n> {msg}\")\n        async for event in workflow.run(msg, stream=True):\n            if event.type == \"executor_invoked\":\n                print(f\"  ▶ {event.executor_id}\")\n            elif event.type == \"output\":\n                print(f\"\\n✔ {_texto(event.data)}\")\n            elif event.type == \"error\":\n                print(f\"\\n✖ erro: {event.data}\")\n\n\ndef _texto(data) -> str:\n    messages = getattr(data, \"messages\", None)\n    if messages:\n        return \"\\n\".join(f\"[{m.author_name or 'assistant'}] {m.text}\" for m in messages if m.text)\n    if isinstance(data, list):\n        return \"\\n\".join(f\"[{getattr(m, 'author_name', 'assistant')}] {getattr(m, 'text', m)}\" for m in data)\n    return str(data)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/06_concurrent_analise.py": "\"\"\"\nEtapa 5 (quater) · Orquestração CONCORRENTE — cenário \"Segunda opinião\"\n\nTrês agentes recebem a MESMA entrada ao mesmo tempo e um agregador\nconsolida. Útil quando as tarefas são independentes e você quer cortar\nlatência ou obter perspectivas diferentes sobre o mesmo dado.\n\n              ┌─▶ risco_entrega ──┐\n  entrada ────┼─▶ risco_cadastro ─┼──▶ agregador ──▶ saída\n              └─▶ oportunidade ───┘\n\"\"\"\n\nimport asyncio\n\nfrom agent_framework.orchestrations import ConcurrentBuilder\n\nfrom _common import banner, get_client\nfrom tools import buscar_cliente_por_cpf, listar_pedidos_cliente\n\n\ndef build_workflow(client):\n    risco_entrega = client.as_agent(\n        name=\"risco_entrega\",\n        instructions=(\n            \"Avalie risco de ENTREGA: pedidos 'enviado' com previsão próxima ou vencida. \"\n            \"Use listar_pedidos_cliente. Responda em 2 bullets no máximo.\"\n        ),\n        tools=[listar_pedidos_cliente],\n    )\n    risco_cadastro = client.as_agent(\n        name=\"risco_cadastro\",\n        instructions=(\n            \"Avalie risco CADASTRAL: dados ausentes (bairro, complemento, telefone) ou \"\n            \"endereço sem origem validada. Use buscar_cliente_por_cpf. 2 bullets no máximo.\"\n        ),\n        tools=[buscar_cliente_por_cpf],\n    )\n    oportunidade = client.as_agent(\n        name=\"oportunidade\",\n        instructions=(\n            \"Identifique OPORTUNIDADE comercial pelo segmento e histórico de pedidos \"\n            \"(buscar_cliente_por_cpf + listar_pedidos_cliente com apenas_abertos=false). \"\n            \"1 sugestão objetiva.\"\n        ),\n        tools=[buscar_cliente_por_cpf, listar_pedidos_cliente],\n    )\n\n    return ConcurrentBuilder(\n        participants=[risco_entrega, risco_cadastro, oportunidade],\n        intermediate_output_from=[risco_entrega, risco_cadastro, oportunidade],\n    ).build()\n\n\nasync def main() -> None:\n    workflow = build_workflow(get_client())\n    banner(\"06 · Concorrente · Três análises em paralelo sobre o mesmo cliente\")\n\n    async for event in workflow.run(\"Analise o cliente de CPF 012.345.678-90.\", stream=True):\n        if event.type == \"intermediate\":\n            print(f\"\\n[{event.executor_id}]\\n{_texto(event.data)}\")\n        elif event.type == \"output\":\n            print(f\"\\n✔ CONSOLIDADO:\\n{_texto(event.data)}\")\n\n\ndef _texto(data) -> str:\n    messages = getattr(data, \"messages\", None)\n    if messages:\n        return \"\\n\".join(m.text for m in messages if m.text)\n    if isinstance(data, list):\n        return \"\\n\".join(getattr(m, \"text\", str(m)) for m in data)\n    return str(data)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "agents/07_observability.py": "\"\"\"\nEtapa 6 · Observabilidade\n\nRoda o MESMO workflow sequencial do exemplo 03, agora instrumentado.\nNada muda no agente: a telemetria é OpenTelemetry com as convenções\nsemânticas GenAI, e o destino é escolhido por variável de ambiente.\n\n  OBS_TARGET=foundry  → Application Insights do projeto Foundry\n                        (Foundry ▸ Build ▸ Agents ▸ Traces / Monitor)\n  OBS_TARGET=aspire   → Aspire Dashboard local via OTLP (localhost:4317)\n                        docker run --rm -it -d -p 18888:18888 -p 4317:18889 \\\n                          --name aspire mcr.microsoft.com/dotnet/aspire-dashboard:latest\n  OBS_TARGET=console  → spans impressos no terminal (debug rápido)\n\"\"\"\n\nimport asyncio\nimport importlib\nimport os\n\nfrom _common import banner, get_client\n\n# módulo começa com dígito → importlib\nseq = importlib.import_module(\"03_sequential_atualizacao_cadastral\")\n\n\ndef configurar_observabilidade(client) -> str:\n    alvo = os.getenv(\"OBS_TARGET\", \"console\").lower()\n\n    if alvo == \"foundry\":\n        # O FoundryChatClient conhece a connection string do App Insights do projeto.\n        # enable_sensitive_data=True grava prompts/respostas nos spans (útil em demo,\n        # avalie com cuidado em produção).\n        client.configure_azure_monitor(enable_sensitive_data=True)\n        return \"Foundry / Azure Monitor\"\n\n    from agent_framework.observability import configure_otel_providers\n\n    if alvo == \"aspire\":\n        os.environ.setdefault(\"OTEL_EXPORTER_OTLP_ENDPOINT\", \"http://localhost:4317\")\n        os.environ.setdefault(\"OTEL_SERVICE_NAME\", \"maf-workshop\")\n        configure_otel_providers(enable_sensitive_data=True)\n        return \"Aspire Dashboard (http://localhost:18888)\"\n\n    os.environ.setdefault(\"ENABLE_CONSOLE_EXPORTERS\", \"true\")\n    configure_otel_providers(enable_sensitive_data=True)\n    return \"console\"\n\n\nasync def main() -> None:\n    client = get_client()\n    destino = configurar_observabilidade(client)\n\n    banner(f\"07 · Observabilidade → {destino}\")\n\n    from agent_framework.observability import get_tracer\n\n    tracer = get_tracer()\n    workflow = seq.build_workflow(client)\n\n    entrada = (\n        \"Sou o Lucas Teixeira Mendes, CPF 223.344.556-67. Novo endereço: \"\n        \"CEP 30130-010, número 1500, sala 301. Atualizem, por favor.\"\n    )\n\n    # Um span \"pai\" por requisição de negócio: no monitor você vê\n    # workflow → cada agente → chamada ao modelo → execução de cada tool.\n    with tracer.start_as_current_span(\"atendimento.atualizacao_cadastral\") as span:\n        span.set_attribute(\"workshop.cenario\", \"atualizacao_cadastral\")\n        span.set_attribute(\"workshop.canal\", \"demo\")\n\n        async for event in workflow.run(entrada, stream=True):\n            if event.type == \"executor_invoked\":\n                print(f\"▶ {event.executor_id}\")\n            elif event.type == \"output\":\n                print(\"\\n✔ RESPOSTA FINAL:\\n\" + seq._texto(event.data))\n\n    print(f\"\\nTraces enviados para: {destino}\")\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n",
+  "tools/viacep.py": "\"\"\"\nTool de consulta de CEP via ViaCEP (https://viacep.com.br).\n\nNo Microsoft Agent Framework, uma tool é só uma função Python com\ntype hints e docstring. O framework gera o JSON schema a partir das\nanotações `Annotated[tipo, \"descrição\"]` e a docstring vira a\ndescrição da ferramenta para o modelo.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport json\nimport re\nfrom typing import Annotated\n\nimport httpx\n\nVIACEP_URL = \"https://viacep.com.br/ws/{cep}/json/\"\n\n\ndef _normalizar_cep(cep: str) -> str:\n    \"\"\"Mantém apenas dígitos e valida o tamanho.\"\"\"\n    digitos = re.sub(r\"\\D\", \"\", cep or \"\")\n    if len(digitos) != 8:\n        raise ValueError(f\"CEP inválido: '{cep}'. Esperado 8 dígitos.\")\n    return digitos\n\n\nasync def consultar_cep(\n    cep: Annotated[str, \"CEP brasileiro com 8 dígitos, com ou sem hífen. Ex.: 01310-100\"],\n) -> str:\n    \"\"\"Consulta um CEP na API pública ViaCEP e retorna o endereço completo\n    (logradouro, bairro, cidade, UF, DDD) em JSON. Use antes de cadastrar\n    ou atualizar qualquer endereço para garantir que o CEP existe e para\n    preencher os campos automaticamente.\"\"\"\n    try:\n        digitos = _normalizar_cep(cep)\n    except ValueError as exc:\n        return json.dumps({\"erro\": str(exc)}, ensure_ascii=False)\n\n    async with httpx.AsyncClient(timeout=10) as client:\n        resp = await client.get(VIACEP_URL.format(cep=digitos))\n\n    if resp.status_code != 200:\n        return json.dumps({\"erro\": f\"ViaCEP respondeu HTTP {resp.status_code}\"}, ensure_ascii=False)\n\n    dados = resp.json()\n    if dados.get(\"erro\"):\n        return json.dumps({\"erro\": f\"CEP {digitos} não encontrado\"}, ensure_ascii=False)\n\n    endereco = {\n        \"cep\": digitos,\n        \"logradouro\": dados.get(\"logradouro\", \"\"),\n        \"complemento\": dados.get(\"complemento\", \"\"),\n        \"bairro\": dados.get(\"bairro\", \"\"),\n        \"cidade\": dados.get(\"localidade\", \"\"),\n        \"uf\": dados.get(\"uf\", \"\"),\n        \"ddd\": dados.get(\"ddd\", \"\"),\n        \"fonte\": \"viacep\",\n    }\n    return json.dumps(endereco, ensure_ascii=False)\n\n\nif __name__ == \"__main__\":  # teste rápido: python -m tools.viacep\n    import asyncio\n\n    print(asyncio.run(consultar_cep(\"01310-100\")))\n",
+  "tools/postgres.py": "\"\"\"\nTools de acesso ao PostgreSQL (schema `workshop`).\n\nPrincípios usados aqui, que valem a pena comentar na apresentação:\n  • Cada tool faz UMA coisa e retorna JSON serializado — o modelo lê\n    texto, então devolvemos texto estruturado e previsível.\n  • Nada de SQL livre vindo do LLM: as queries são fixas e parametrizadas.\n    A autonomia do agente fica em \"qual tool chamar\", não em \"qual SQL rodar\".\n  • Toda escrita (UPDATE/INSERT) gera uma linha em `log_agentes` — trilha\n    de auditoria barata que depois aparece lado a lado com os traces.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport json\nimport os\nimport re\nfrom decimal import Decimal\nfrom datetime import date, datetime\nfrom typing import Annotated, Any\n\nimport psycopg\nfrom psycopg.rows import dict_row\n\n\n# ---------------------------------------------------------------------\n# Infraestrutura\n# ---------------------------------------------------------------------\ndef _database_url() -> str:\n    url = os.getenv(\"DATABASE_URL\")\n    if not url:\n        raise RuntimeError(\"DATABASE_URL não definida (veja .env.example)\")\n    return url\n\n\nasync def _conn() -> psycopg.AsyncConnection:\n    conn = await psycopg.AsyncConnection.connect(_database_url(), row_factory=dict_row)\n    await conn.execute(\"SET search_path TO workshop, public\")\n    return conn\n\n\ndef _json(obj: Any) -> str:\n    def default(o: Any):\n        if isinstance(o, Decimal):\n            return float(o)\n        if isinstance(o, (date, datetime)):\n            return o.isoformat()\n        return str(o)\n\n    return json.dumps(obj, ensure_ascii=False, default=default)\n\n\ndef _so_digitos(valor: str) -> str:\n    return re.sub(r\"\\D\", \"\", valor or \"\")\n\n\n# ---------------------------------------------------------------------\n# Tools de LEITURA\n# ---------------------------------------------------------------------\nasync def buscar_cliente_por_cpf(\n    cpf: Annotated[str, \"CPF do cliente, com ou sem pontuação (11 dígitos)\"],\n) -> str:\n    \"\"\"Busca um cliente pelo CPF e retorna seus dados cadastrais, o endereço\n    principal atual e um resumo de pedidos em aberto. Retorna {\"erro\": ...}\n    se o CPF não existir na base.\"\"\"\n    cpf_digitos = _so_digitos(cpf)\n    async with await _conn() as conn:\n        row = await (\n            await conn.execute(\"SELECT * FROM vw_cliente_resumo WHERE cpf = %s\", (cpf_digitos,))\n        ).fetchone()\n    if not row:\n        return _json({\"erro\": f\"Cliente com CPF {cpf_digitos} não encontrado\"})\n    return _json(row)\n\n\nasync def listar_pedidos_cliente(\n    cpf: Annotated[str, \"CPF do cliente (11 dígitos)\"],\n    apenas_abertos: Annotated[bool, \"Se true, retorna só pedidos pendentes, pagos ou enviados\"] = True,\n) -> str:\n    \"\"\"Lista os pedidos de um cliente (código, descrição, valor, status e\n    previsão de entrega). Útil para verificar se há entregas em andamento\n    antes de alterar o endereço.\"\"\"\n    cpf_digitos = _so_digitos(cpf)\n    sql = \"\"\"\n        SELECT p.codigo, p.descricao, p.valor, p.status, p.criado_em, p.previsao_entrega\n        FROM pedidos p\n        JOIN clientes c ON c.id = p.cliente_id\n        WHERE c.cpf = %s\n          AND (%s = FALSE OR p.status IN ('pendente','pago','enviado'))\n        ORDER BY p.criado_em DESC\n    \"\"\"\n    async with await _conn() as conn:\n        rows = await (await conn.execute(sql, (cpf_digitos, apenas_abertos))).fetchall()\n    return _json({\"cpf\": cpf_digitos, \"total\": len(rows), \"pedidos\": rows})\n\n\nasync def relatorio_pedidos_por_uf(\n    status: Annotated[str, \"Filtro de status: pendente, pago, enviado, entregue, cancelado ou 'todos'\"] = \"todos\",\n) -> str:\n    \"\"\"Agrega os pedidos por UF do endereço principal do cliente: quantidade,\n    valor total e ticket médio. Base para análises regionais.\"\"\"\n    status = (status or \"todos\").lower()\n    sql = \"\"\"\n        SELECT e.uf,\n               COUNT(p.id)            AS qtd_pedidos,\n               SUM(p.valor)           AS valor_total,\n               ROUND(AVG(p.valor), 2) AS ticket_medio\n        FROM pedidos p\n        JOIN clientes  c ON c.id = p.cliente_id\n        JOIN enderecos e ON e.cliente_id = c.id AND e.principal\n        WHERE (%s = 'todos' OR p.status::text = %s)\n        GROUP BY e.uf\n        ORDER BY valor_total DESC\n    \"\"\"\n    async with await _conn() as conn:\n        rows = await (await conn.execute(sql, (status, status))).fetchall()\n    return _json({\"filtro_status\": status, \"linhas\": rows})\n\n\n# ---------------------------------------------------------------------\n# Tools de ESCRITA\n# ---------------------------------------------------------------------\nasync def atualizar_endereco_cliente(\n    cpf: Annotated[str, \"CPF do cliente (11 dígitos)\"],\n    cep: Annotated[str, \"CEP já validado no ViaCEP (8 dígitos)\"],\n    logradouro: Annotated[str, \"Logradouro retornado pelo ViaCEP\"],\n    numero: Annotated[str, \"Número informado pelo cliente\"],\n    bairro: Annotated[str, \"Bairro retornado pelo ViaCEP\"],\n    cidade: Annotated[str, \"Cidade retornada pelo ViaCEP\"],\n    uf: Annotated[str, \"UF com 2 letras\"],\n    complemento: Annotated[str, \"Complemento (apto, bloco, sala). Vazio se não houver\"] = \"\",\n) -> str:\n    \"\"\"Define um NOVO endereço principal para o cliente. O endereço anterior é\n    mantido no histórico (principal = false). Só chame depois de validar o CEP\n    com consultar_cep. Registra a ação em log_agentes.\"\"\"\n    cpf_digitos = _so_digitos(cpf)\n    cep_digitos = _so_digitos(cep)\n    if len(cep_digitos) != 8:\n        return _json({\"erro\": \"CEP deve ter 8 dígitos\"})\n\n    async with await _conn() as conn:\n        async with conn.transaction():\n            cliente = await (\n                await conn.execute(\"SELECT id, nome FROM clientes WHERE cpf = %s\", (cpf_digitos,))\n            ).fetchone()\n            if not cliente:\n                return _json({\"erro\": f\"Cliente com CPF {cpf_digitos} não encontrado\"})\n\n            await conn.execute(\n                \"UPDATE enderecos SET principal = FALSE WHERE cliente_id = %s AND principal\",\n                (cliente[\"id\"],),\n            )\n            novo = await (\n                await conn.execute(\n                    \"\"\"\n                    INSERT INTO enderecos\n                        (cliente_id, cep, logradouro, numero, complemento, bairro, cidade, uf, principal, origem)\n                    VALUES (%s, %s, %s, %s, NULLIF(%s, ''), %s, %s, %s, TRUE, 'agente')\n                    RETURNING id, cep, logradouro, numero, complemento, bairro, cidade, uf\n                    \"\"\",\n                    (cliente[\"id\"], cep_digitos, logradouro, numero, complemento, bairro, cidade, uf.upper()),\n                )\n            ).fetchone()\n\n            await conn.execute(\n                \"INSERT INTO log_agentes (agente, acao, cliente_id, detalhes) VALUES (%s, %s, %s, %s)\",\n                (\"analista_cadastro\", \"atualizar_endereco\", cliente[\"id\"], _json(novo)),\n            )\n\n    return _json({\"ok\": True, \"cliente\": cliente[\"nome\"], \"endereco_principal\": novo})\n\n\nasync def registrar_log_agente(\n    agente: Annotated[str, \"Nome do agente que executou a ação\"],\n    acao: Annotated[str, \"Ação executada, em snake_case (ex.: resumo_enviado)\"],\n    detalhes: Annotated[str, \"Texto livre ou JSON com o contexto da ação\"],\n    cpf: Annotated[str, \"CPF do cliente relacionado, se houver\"] = \"\",\n) -> str:\n    \"\"\"Grava uma entrada na trilha de auditoria (tabela log_agentes). Use para\n    registrar decisões relevantes do agente que não alteram outras tabelas.\"\"\"\n    cpf_digitos = _so_digitos(cpf)\n    async with await _conn() as conn:\n        cliente_id = None\n        if cpf_digitos:\n            row = await (await conn.execute(\"SELECT id FROM clientes WHERE cpf = %s\", (cpf_digitos,))).fetchone()\n            cliente_id = row[\"id\"] if row else None\n        try:\n            detalhes_json = json.loads(detalhes)\n        except (TypeError, ValueError):\n            detalhes_json = {\"texto\": detalhes}\n        await conn.execute(\n            \"INSERT INTO log_agentes (agente, acao, cliente_id, detalhes) VALUES (%s, %s, %s, %s)\",\n            (agente, acao, cliente_id, _json(detalhes_json)),\n        )\n        await conn.commit()\n    return _json({\"ok\": True})\n",
+  "requirements.txt": "# Microsoft Agent Framework (Python) — inclui orquestrações e Foundry client\nagent-framework>=1.0.0\n\n# Autenticação Azure (AzureCliCredential / DefaultAzureCredential)\nazure-identity>=1.19\n\n# Observabilidade: exporter do Azure Monitor / Application Insights\nazure-monitor-opentelemetry>=1.8.10,<2\n\n# Tools\nhttpx>=0.27            # ViaCEP\npsycopg[binary]>=3.2   # PostgreSQL (driver assíncrono)\n\n# Utilidades\npython-dotenv>=1.0\n",
+  ".env.example": "# ---------- Modelo ----------\n# foundry (padrão) | azure-openai | openai\nMODEL_PROVIDER=foundry\n\n# Microsoft Foundry: Project ▸ Overview ▸ endpoint do projeto\nFOUNDRY_PROJECT_ENDPOINT=https://SEU-RECURSO.services.ai.azure.com/api/projects/SEU-PROJETO\nFOUNDRY_MODEL=gpt-4o-mini\n\n# Alternativa: Azure OpenAI direto\n# AZURE_OPENAI_ENDPOINT=https://SEU-RECURSO.openai.azure.com\n# AZURE_OPENAI_DEPLOYMENT=gpt-4o-mini\n\n# Alternativa: OpenAI ou endpoint compatível (Ollama, vLLM...)\n# OPENAI_API_KEY=sk-...\n# OPENAI_MODEL=gpt-4o-mini\n# OPENAI_BASE_URL=http://localhost:11434/v1\n\n# ---------- Banco ----------\nDATABASE_URL=postgresql://maf:maf@localhost:5432/workshop\n\n# ---------- Observabilidade ----------\n# console | aspire | foundry\nOBS_TARGET=console\n",
+  "README.md": "# MAF Workshop — Agentes com Microsoft Agent Framework, ViaCEP e PostgreSQL\n\nMaterial de apoio da palestra *\"Por onde começar criando agentes de IA com o\nMicrosoft Agent Framework\"*. Cada arquivo em `agents/` corresponde a uma etapa\ndo storytelling; `index.html` é a página interativa com os modelos de\norquestração e os cenários.\n\n```\nmaf-workshop/\n├── index.html                       # página interativa (abra no navegador)\n├── docker-compose.yml               # Postgres 16 já com schema + carga\n├── requirements.txt\n├── .env.example\n├── sql/\n│   ├── 01_schema.sql                # tabelas, view, trigger, log de agentes\n│   └── 02_seed.sql                  # 12 clientes, 12 endereços, 16 pedidos\n├── scripts/\n│   └── setup_db.py                  # alternativa ao docker (Postgres existente)\n├── tools/\n│   ├── viacep.py                    # consultar_cep  (httpx → viacep.com.br)\n│   └── postgres.py                  # buscar_cliente, listar_pedidos, atualizar_endereco, relatorio_por_uf, log\n└── agents/\n    ├── _common.py                   # get_client(): foundry | azure-openai | openai\n    ├── 01_hello_agent.py            # Etapa 1 · hello world\n    ├── 02_agent_tools.py            # Etapa 2 · agente + tools\n    ├── 03_sequential_atualizacao_cadastral.py   # Etapa 5 · SEQUENCIAL (ViaCEP → Postgres → resposta)\n    ├── 04_sequential_relatorio_regional.py      # Etapa 5 · SEQUENCIAL analítico + workflow-as-agent\n    ├── 05_handoff_atendimento.py    # Etapa 5 · HANDOFF (triagem → especialista)\n    ├── 06_concurrent_analise.py     # Etapa 5 · CONCORRENTE (3 análises em paralelo)\n    └── 07_observability.py          # Etapa 6 · traces no Foundry / Aspire / console\n```\n\n## 1. Banco de dados\n\n**Com Docker (recomendado para a demo):**\n\n```bash\ndocker compose up -d\n# os scripts em sql/ rodam automaticamente na primeira subida\ndocker compose exec postgres psql -U maf -d workshop -c \"SELECT * FROM workshop.vw_cliente_resumo LIMIT 3;\"\n```\n\n**Em um Postgres existente (local, Azure Database for PostgreSQL…):**\n\n```bash\ncp .env.example .env            # ajuste DATABASE_URL\npip install -r requirements.txt\npython scripts/setup_db.py      # --reset para recriar do zero\n```\n\n## 2. Modelo\n\nImplante um modelo em um projeto do **Microsoft Foundry** (ex.: `gpt-4o-mini`) e preencha\n`FOUNDRY_PROJECT_ENDPOINT` e `FOUNDRY_MODEL` no `.env`. Faça `az login` — os exemplos usam\n`AzureCliCredential`.\n\nPara mostrar a flexibilidade na hora: mude `MODEL_PROVIDER` para `azure-openai` ou\n`openai` (inclusive Ollama local via `OPENAI_BASE_URL`). Nenhum agente muda.\n\n## 3. Rodando os exemplos\n\n```bash\ncd agents\npython 01_hello_agent.py\npython 02_agent_tools.py\npython 03_sequential_atualizacao_cadastral.py\npython 04_sequential_relatorio_regional.py\npython 05_handoff_atendimento.py\npython 06_concurrent_analise.py\nOBS_TARGET=foundry python 07_observability.py     # ou aspire | console\n```\n\nTeste rápido das tools sem LLM:\n\n```bash\npython -m tools.viacep          # consulta 01310-100 no ViaCEP\n```\n\n## 4. Observabilidade\n\n| OBS_TARGET | Onde ver | Pré-requisito |\n|---|---|---|\n| `console` | terminal | nenhum |\n| `aspire` | http://localhost:18888 | `docker run --rm -d -p 18888:18888 -p 4317:18889 mcr.microsoft.com/dotnet/aspire-dashboard:latest` |\n| `foundry` | Foundry ▸ Build ▸ Agents ▸ Traces (e Monitor) | Application Insights conectado ao projeto |\n\n## Cenários cobertos\n\n| Cenário | Orquestração | Tools | Arquivo |\n|---|---|---|---|\n| Atualização cadastral com validação de CEP | Sequencial | ViaCEP, Postgres (R/W) | `03_…` |\n| Relatório de pedidos por região | Sequencial (workflow-as-agent) | Postgres (R) | `04_…` |\n| Atendimento com triagem | Handoff | ViaCEP, Postgres | `05_…` |\n| Análise de risco/oportunidade | Concorrente | Postgres (R) | `06_…` |\n\n> Dados 100 % fictícios. CPFs e e-mails inventados.\n"
+};
+
+/* ---------- padrões de orquestração ---------- */
+const PATTERNS = [
+ {id:"sequential", nome:"Sequencial", quem:"você", resumo:"Agentes executam um após o outro; cada um recebe a conversa acumulada.",
+  svg:`<svg viewBox="0 0 220 70"><g fill="var(--accent-soft)" stroke="var(--accent)"><rect x="8" y="22" width="48" height="26" rx="6"/><rect x="86" y="22" width="48" height="26" rx="6"/><rect x="164" y="22" width="48" height="26" rx="6"/></g><g stroke="var(--muted)" stroke-width="1.5" fill="none"><path d="M56 35h30M134 35h30"/><path d="M80 31l6 4-6 4M158 31l6 4-6 4"/></g><g font-size="9" fill="var(--fg)" text-anchor="middle" font-family="IBM Plex Mono"><text x="32" y="39">valida</text><text x="110" y="39">analisa</text><text x="188" y="39">escreve</text></g></svg>`,
+  quando:["a ordem importa: validar antes de gravar, gravar antes de avisar","cada etapa refina a anterior (extrair → analisar → redigir)","você quer previsibilidade e auditoria simples"],
+  evite:["etapas independentes (use Concorrente)","quando o roteamento depende do pedido (use Handoff)"],
+  code:`from agent_framework.orchestrations import SequentialBuilder
+
+workflow = SequentialBuilder(
+    participants=[validador, analista, comunicador],
+    intermediate_output_from=[validador, analista],
+).build()
+
+async for ev in workflow.run(pedido, stream=True):
+    if ev.type == "output":
+        print(ev.data.messages[-1].text)`,
+  cenario:"Atualização cadastral · Relatório regional"},
+ {id:"concurrent", nome:"Concorrente", quem:"você", resumo:"Todos recebem a mesma entrada em paralelo; um agregador consolida.",
+  svg:`<svg viewBox="0 0 220 90"><g fill="var(--accent-soft)" stroke="var(--accent)"><rect x="8" y="32" width="44" height="26" rx="6"/><rect x="88" y="4" width="44" height="22" rx="6"/><rect x="88" y="34" width="44" height="22" rx="6"/><rect x="88" y="64" width="44" height="22" rx="6"/><rect x="168" y="32" width="44" height="26" rx="6"/></g><g stroke="var(--muted)" stroke-width="1.5" fill="none"><path d="M52 45C70 45 70 15 88 15M52 45h36M52 45C70 45 70 75 88 75M132 15C150 15 150 45 168 45M132 45h36M132 75C150 75 150 45 168 45"/></g><g font-size="8" fill="var(--fg)" text-anchor="middle" font-family="IBM Plex Mono"><text x="30" y="49">entrada</text><text x="110" y="19">entrega</text><text x="110" y="49">cadastro</text><text x="110" y="79">venda</text><text x="190" y="49">agrega</text></g></svg>`,
+  quando:["tarefas independentes sobre o mesmo dado","você quer cortar latência","perspectivas diferentes (risco, compliance, comercial)"],
+  evite:["quando um resultado depende do outro","quando os agentes precisam conversar entre si"],
+  code:`from agent_framework.orchestrations import ConcurrentBuilder
+
+workflow = ConcurrentBuilder(
+    participants=[risco_entrega, risco_cadastro, oportunidade],
+    intermediate_output_from=[risco_entrega, risco_cadastro, oportunidade],
+).build()  # .with_aggregator(fn) para consolidar do seu jeito`,
+  cenario:"Análise de risco e oportunidade"},
+ {id:"handoff", nome:"Handoff", quem:"o modelo", resumo:"Um agente transfere o controle a outro conforme o contexto. Triagem → especialista.",
+  svg:`<svg viewBox="0 0 220 90"><g fill="var(--accent-soft)" stroke="var(--accent)"><rect x="8" y="32" width="54" height="26" rx="6"/><rect x="150" y="6" width="62" height="24" rx="6"/><rect x="150" y="60" width="62" height="24" rx="6"/></g><g stroke="var(--accent)" stroke-width="1.6" fill="none" stroke-dasharray="4 3"><path d="M62 45C110 45 100 18 150 18"/><path d="M62 45C110 45 100 72 150 72"/></g><g font-size="8" fill="var(--fg)" text-anchor="middle" font-family="IBM Plex Mono"><text x="35" y="49">triagem</text><text x="181" y="22">cadastro</text><text x="181" y="76">pedidos</text></g><text x="98" y="38" font-size="7" fill="var(--muted)" font-family="IBM Plex Sans">LLM decide</text></svg>`,
+  quando:["atendimento: cada especialista com suas tools","o roteamento depende do que o usuário pediu","você quer limitar o escopo de cada agente (menos tools = menos risco)"],
+  evite:["processos com ordem fixa","quando precisa de várias rodadas de debate"],
+  code:`from agent_framework.orchestrations import HandoffBuilder
+
+workflow = (
+    HandoffBuilder(name="atendimento",
+                   participants=[triagem, cadastro, pedidos])
+    .with_start_agent(triagem)
+    .with_autonomous_mode(turn_limits={"triagem": 2, "cadastro": 4})
+    .build()
+)`,
+  cenario:"Atendimento com triagem"},
+ {id:"groupchat", nome:"Group Chat", quem:"um orquestrador", resumo:"Conversa compartilhada; um orquestrador escolhe quem fala (round-robin, prompt ou regra sua).",
+  svg:`<svg viewBox="0 0 220 90"><circle cx="110" cy="45" r="16" fill="var(--tool-soft)" stroke="var(--tool)"/><g fill="var(--accent-soft)" stroke="var(--accent)"><rect x="10" y="10" width="46" height="22" rx="6"/><rect x="164" y="10" width="46" height="22" rx="6"/><rect x="10" y="58" width="46" height="22" rx="6"/><rect x="164" y="58" width="46" height="22" rx="6"/></g><g stroke="var(--muted)" stroke-width="1.3" fill="none"><path d="M56 21L96 38M164 21L124 38M56 69L96 52M164 69L124 52"/></g><g font-size="8" fill="var(--fg)" text-anchor="middle" font-family="IBM Plex Mono"><text x="33" y="25">redator</text><text x="187" y="25">revisor</text><text x="33" y="73">jurídico</text><text x="187" y="73">dados</text><text x="110" y="48" font-size="7">orq.</text></g></svg>`,
+  quando:["refinamento iterativo (escreve → revisa → reescreve)","várias perspectivas sobre a mesma peça","QA automatizado com aprovação"],
+  evite:["sequência estrita (Sequencial)","agentes totalmente independentes (Concorrente)"],
+  code:`from agent_framework.orchestrations import GroupChatBuilder
+
+workflow = (
+    GroupChatBuilder(participants=[redator, revisor])
+    .with_round_robin(max_rounds=4)   # ou seleção por prompt / custom
+    .build()
+)`,
+  cenario:"Revisão de comunicado ao cliente (não incluso no pacote)"},
+ {id:"magentic", nome:"Magentic", quem:"um gerente (agente)", resumo:"Um gerente planeja, escolhe quem age, acompanha progresso e replaneja se travar.",
+  svg:`<svg viewBox="0 0 220 90"><rect x="80" y="6" width="60" height="24" rx="6" fill="var(--tool-soft)" stroke="var(--tool)"/><g fill="var(--accent-soft)" stroke="var(--accent)"><rect x="8" y="58" width="56" height="24" rx="6"/><rect x="82" y="58" width="56" height="24" rx="6"/><rect x="156" y="58" width="56" height="24" rx="6"/></g><g stroke="var(--muted)" stroke-width="1.3" fill="none"><path d="M100 30L36 58M110 30v28M120 30l64 28"/></g><g font-size="8" fill="var(--fg)" text-anchor="middle" font-family="IBM Plex Mono"><text x="110" y="21">gerente</text><text x="36" y="73">pesquisa</text><text x="110" y="73">código</text><text x="184" y="73">dados</text></g><text x="160" y="40" font-size="7" fill="var(--muted)" font-family="IBM Plex Sans">plano · ledger</text></svg>`,
+  quando:["problema aberto, sem passos conhecidos de antemão","precisa de planejamento, detecção de travamento e replanejamento","você aceita mais custo em troca de autonomia"],
+  evite:["qualquer coisa que você consiga descrever como etapas","latência ou custo apertados"],
+  code:`from agent_framework.orchestrations import MagenticBuilder
+
+workflow = (
+    MagenticBuilder(participants={"pesquisa": pesquisa, "dados": dados})
+    .with_manager(client=client, max_round_count=10, max_stall_count=2)
+    .build()
+)`,
+  cenario:"Investigação aberta (não incluso no pacote)"},
+];
+
+/* ---------- cenários do simulador (dados reais da seed) ---------- */
+const J = o => JSON.stringify(o, null, 1).replace(/\n\s*/g," ");
+const SCENARIOS = [
+ {id:"cadastral", nome:"Atualização cadastral", padrao:"Sequencial", arquivo:"agents/03_sequential_atualizacao_cadastral.py",
+  desc:"ViaCEP valida o CEP, Postgres localiza o cliente e grava o novo endereço, o comunicador redige a resposta.",
+  lanes:["validador_endereco","analista_cadastro","comunicador"],
+  steps:[
+   {t:"user", b:"Sou a Ana Beatriz Moura, CPF 123.456.789-01. Mudei de endereço: agora moro no CEP 04538-132, número 3477, torre B, apto 1201. Podem atualizar meu cadastro?"},
+   {t:"agent", lane:0, b:"Extraí CEP 04538-132 e número 3477. Validando no ViaCEP…"},
+   {t:"tool", lane:0, name:"consultar_cep", args:{cep:"04538-132"}, out:{cep:"04538132",logradouro:"Avenida Brigadeiro Faria Lima",bairro:"Itaim Bibi",cidade:"São Paulo",uf:"SP",ddd:"11",fonte:"viacep"}},
+   {t:"agent", lane:0, b:"CEP válido.\n• cep: 04538-132\n• logradouro: Avenida Brigadeiro Faria Lima, 3477\n• complemento: torre B, apto 1201\n• bairro: Itaim Bibi · cidade: São Paulo · uf: SP", done:true},
+   {t:"agent", lane:1, b:"Endereço validado. Buscando o cliente e os pedidos em aberto…"},
+   {t:"tool", lane:1, name:"buscar_cliente_por_cpf", args:{cpf:"12345678901"}, out:{id:1,nome:"Ana Beatriz Moura",segmento:"varejo",cep:"01310100",logradouro:"Avenida Paulista",numero:"1578",cidade:"São Paulo",uf:"SP",pedidos_abertos:1,valor_em_aberto:4899.9}},
+   {t:"tool", lane:1, name:"listar_pedidos_cliente", args:{cpf:"12345678901",apenas_abertos:true}, out:{total:1,pedidos:[{codigo:"PED-2026-0001",descricao:"Notebook 14\" 16GB",valor:4899.9,status:"enviado",previsao_entrega:"2026-10-24"}]}},
+   {t:"tool", lane:1, name:"atualizar_endereco_cliente", args:{cpf:"12345678901",cep:"04538132",logradouro:"Avenida Brigadeiro Faria Lima",numero:"3477",complemento:"torre B, apto 1201",bairro:"Itaim Bibi",cidade:"São Paulo",uf:"SP"}, out:{ok:true,cliente:"Ana Beatriz Moura",endereco_principal:{id:13,cep:"04538132",logradouro:"Avenida Brigadeiro Faria Lima",numero:"3477"}}},
+   {t:"agent", lane:1, b:"• Cliente encontrado: Ana Beatriz Moura (varejo)\n• Endereço anterior: Av. Paulista, 1578 – Bela Vista/SP\n• Endereço novo: Av. Brig. Faria Lima, 3477, torre B apto 1201 – Itaim Bibi/SP (gravado, origem=agente)\n• Pedido em aberto que pode ser afetado: PED-2026-0001 (Notebook), status ENVIADO, previsão 24/10 → seguirá para o endereço antigo.", done:true},
+   {t:"agent", lane:2, b:"Redigindo a resposta e registrando o resumo na trilha de auditoria…"},
+   {t:"tool", lane:2, name:"registrar_log_agente", args:{agente:"comunicador",acao:"resumo_enviado",cpf:"12345678901",detalhes:"{\"endereco_novo\":\"04538132\",\"alerta\":\"PED-2026-0001 enviado\"}"}, out:{ok:true}},
+   {t:"out", lane:2, b:"Olá, Ana! Seu endereço foi atualizado para Av. Brigadeiro Faria Lima, 3477, torre B, apto 1201 – Itaim Bibi, São Paulo/SP.\n\nAtenção: o pedido PED-2026-0001 (Notebook 14\") já está a caminho e será entregue no endereço anterior, com previsão para 24/10. Se preferir redirecionar, responda esta mensagem.", done:true},
+  ]},
+ {id:"regional", nome:"Relatório regional", padrao:"Sequencial (workflow como agente)", arquivo:"agents/04_sequential_relatorio_regional.py",
+  desc:"Postgres agrega por UF, o analista interpreta, o redator escreve o resumo executivo. O pipeline inteiro é exposto como um único agente.",
+  lanes:["extrator","analista","redator"],
+  steps:[
+   {t:"user", b:"Gere o relatório de pedidos por UF considerando todos os status."},
+   {t:"tool", lane:0, name:"relatorio_pedidos_por_uf", args:{status:"todos"}, out:{filtro_status:"todos",linhas:[{uf:"PR",qtd_pedidos:1,valor_total:18900,ticket_medio:18900},{uf:"SP",qtd_pedidos:6,valor_total:13485.8,ticket_medio:2247.63},{uf:"BA",qtd_pedidos:1,valor_total:5400,ticket_medio:5400},{uf:"RS",qtd_pedidos:1,valor_total:3299,ticket_medio:3299},{uf:"RJ",qtd_pedidos:3,valor_total:2847.9,ticket_medio:949.3},{uf:"PE",qtd_pedidos:1,valor_total:1299,ticket_medio:1299},{uf:"MG",qtd_pedidos:2,valor_total:1248,ticket_medio:624},{uf:"CE",qtd_pedidos:1,valor_total:459,ticket_medio:459}]}},
+   {t:"agent", lane:0, b:"UF | pedidos | valor_total | ticket_medio\nPR | 1 | 18.900,00 | 18.900,00\nSP | 6 | 13.485,80 | 2.247,63\nBA | 1 | 5.400,00 | 5.400,00\nRS | 1 | 3.299,00 | 3.299,00\nRJ | 3 | 2.847,90 | 949,30\nPE | 1 | 1.299,00 | 1.299,00\nMG | 2 | 1.248,00 | 624,00\nCE | 1 | 459,00 | 459,00", done:true},
+   {t:"agent", lane:1, b:"• Maior valor: PR (R$ 18.900) vem de um único pedido corporativo (servidor); não é tendência, é outlier.\n• Maior volume: SP, 6 de 16 pedidos (37%), ticket médio R$ 2.247.\n• Amostra pequena: PR, BA, RS, PE, CE têm 1 pedido cada; ticket médio ali não é comparável.\n• RJ tem 3 pedidos mas ticket baixo (R$ 949): perfil de acessórios e um cancelamento.", done:true},
+   {t:"out", lane:2, b:"# Pedidos por região · outubro/2026\n\n- **SP concentra o volume**: 6 pedidos e R$ 13,5 mil, ticket médio R$ 2,2 mil.\n- **PR lidera em valor por um único pedido** corporativo de R$ 18,9 mil; tratar como conta, não como região.\n- **Cinco UFs têm um pedido só**; qualquer comparação de ticket médio fora de SP/RJ/MG é prematura.\n\n**Recomendação:** priorizar expansão comercial em SP e trabalhar PR como conta-chave antes de investir em campanha regional.", done:true},
+  ]},
+ {id:"handoff", nome:"Atendimento com triagem", padrao:"Handoff", arquivo:"agents/05_handoff_atendimento.py",
+  desc:"A triagem lê a mensagem e transfere para o especialista. Cada um só tem as tools do seu domínio.",
+  lanes:["triagem","cadastro","pedidos"],
+  steps:[
+   {t:"user", b:"Oi, meu CPF é 567.890.123-45. Meus dois pedidos já saíram para entrega? Quando chegam?"},
+   {t:"agent", lane:0, b:"Assunto: status de entrega → transferindo para o especialista de pedidos.", done:true},
+   {t:"agent", lane:2, b:"Recebi o atendimento. Localizando o cliente e os pedidos…"},
+   {t:"tool", lane:2, name:"buscar_cliente_por_cpf", args:{cpf:"56789012345"}, out:{id:5,nome:"Elaine Pereira Castro",segmento:"premium",cidade:"Belo Horizonte",uf:"MG",pedidos_abertos:2,valor_em_aberto:1248}},
+   {t:"tool", lane:2, name:"listar_pedidos_cliente", args:{cpf:"56789012345",apenas_abertos:true}, out:{total:2,pedidos:[{codigo:"PED-2026-0007",descricao:"Headset Bluetooth",status:"enviado",previsao_entrega:"2026-10-23"},{codigo:"PED-2026-0008",descricao:"Webcam Full HD",status:"enviado",previsao_entrega:"2026-10-23"}]}},
+   {t:"out", lane:2, b:"Olá, Elaine! Os dois pedidos já saíram:\n• PED-2026-0007 – Headset Bluetooth – ENVIADO – previsão 23/10\n• PED-2026-0008 – Webcam Full HD – ENVIADO – previsão 23/10\nEntrega em Av. Afonso Pena, 1500, apto 702 – Belo Horizonte/MG.", done:true},
+  ]},
+ {id:"concurrent", nome:"Análise de risco e oportunidade", padrao:"Concorrente", arquivo:"agents/06_concurrent_analise.py",
+  desc:"Três agentes avaliam o mesmo cliente ao mesmo tempo; o agregador consolida as três visões.",
+  lanes:["risco_entrega","risco_cadastro","oportunidade"], parallel:true,
+  steps:[
+   {t:"user", b:"Analise o cliente de CPF 012.345.678-90."},
+   {t:"tool", lane:0, name:"listar_pedidos_cliente", args:{cpf:"01234567890"}, out:{total:1,pedidos:[{codigo:"PED-2026-0013",descricao:"Smartphone 256GB",valor:4299,status:"enviado",previsao_entrega:"2026-10-25"}]}},
+   {t:"tool", lane:1, name:"buscar_cliente_por_cpf", args:{cpf:"01234567890"}, out:{nome:"João Pedro Azevedo",segmento:"premium",cep:"01001000",logradouro:"Praça da Sé",numero:"1",bairro:"Sé",cidade:"São Paulo",uf:"SP"}},
+   {t:"tool", lane:2, name:"listar_pedidos_cliente", args:{cpf:"01234567890",apenas_abertos:false}, out:{total:2,pedidos:[{codigo:"PED-2026-0013",descricao:"Smartphone 256GB",valor:4299,status:"enviado"},{codigo:"PED-2026-0014",descricao:"Capa protetora",valor:99.9,status:"entregue"}]}},
+   {t:"agent", lane:0, b:"• PED-2026-0013 (R$ 4.299) ENVIADO com previsão 25/10, 3 dias: risco baixo.\n• Nenhum pedido com previsão vencida.", done:true},
+   {t:"agent", lane:1, b:"• Endereço principal sem complemento e com origem 'manual' (não validado no ViaCEP).\n• Número '1' em logradouro público (Praça da Sé): confirmar antes da próxima entrega.", done:true},
+   {t:"agent", lane:2, b:"• Segmento premium, comprou smartphone + capa: oferecer seguro do aparelho ou fone sem fio na entrega do PED-2026-0013.", done:true},
+   {t:"out", b:"Consolidado · João Pedro Azevedo (premium)\n1. Entrega: sem risco imediato (PED-2026-0013 chega em 25/10).\n2. Cadastro: endereço precisa de validação (sem complemento, origem manual) → acionar cadastro antes do próximo envio.\n3. Oportunidade: cross-sell de acessório/seguro no momento da entrega."},
+  ]},
+];
+
+/* ---------- seed para a tabela ---------- */
+const SEED = [
+ ["123.456.789-01","Ana Beatriz Moura","varejo","São Paulo/SP","01310-100",2,4899.90],
+ ["234.567.890-12","Bruno Carvalho Lima","varejo","São Paulo/SP","04538-132",1,2399.00],
+ ["345.678.901-23","Carla Fernandes Souza","premium","Rio de Janeiro/RJ","20040-020",2,1899.00],
+ ["456.789.012-34","Diego Martins Rocha","varejo","Rio de Janeiro/RJ","22250-040",1,0],
+ ["567.890.123-45","Elaine Pereira Castro","premium","Belo Horizonte/MG","30130-010",2,1248.00],
+ ["678.901.234-56","Fábio Nogueira Alves","corporativo","Curitiba/PR","80020-310",1,18900.00],
+ ["789.012.345-67","Gabriela Santos Reis","varejo","Porto Alegre/RS","90010-150",1,0],
+ ["890.123.456-78","Henrique Oliveira Dias","corporativo","Salvador/BA","40020-000",1,5400.00],
+ ["901.234.567-89","Isabela Costa Ramos","varejo","Recife/PE","50030-230",1,1299.00],
+ ["012.345.678-90","João Pedro Azevedo","premium","São Paulo/SP","01001-000",2,4299.00],
+ ["112.233.445-56","Karina Lopes Barbosa","varejo","São Paulo/SP","05407-002",1,1599.00],
+ ["223.344.556-67","Lucas Teixeira Mendes","varejo","Fortaleza/CE","60060-300",1,0],
+];
+
+/* ---------- trace ilustrativo ---------- */
+const TRACE = [
+ ["atendimento.atualizacao_cadastral","wf",0,100,"8.4 s"],
+ ["  workflow.run  sequential","wf",1,98,"8.2 s"],
+ ["    invoke_agent validador_endereco","agent",2,22,"1.9 s"],
+ ["      chat gpt-4o-mini  (312 → 48 tok)","model",3,8,"0.7 s"],
+ ["      execute_tool consultar_cep","tool",11,5,"0.4 s"],
+ ["      chat gpt-4o-mini  (410 → 96 tok)","model",16,8,"0.8 s"],
+ ["    invoke_agent analista_cadastro","agent",24,48,"4.0 s"],
+ ["      chat gpt-4o-mini","model",25,8,"0.7 s"],
+ ["      execute_tool buscar_cliente_por_cpf","tool",33,3,"0.2 s"],
+ ["      execute_tool listar_pedidos_cliente","tool",36,3,"0.2 s"],
+ ["      execute_tool atualizar_endereco_cliente","tool",40,4,"0.3 s"],
+ ["      chat gpt-4o-mini  (1.2k → 210 tok)","model",45,27,"2.6 s"],
+ ["    invoke_agent comunicador","agent",73,25,"2.1 s"],
+ ["      execute_tool registrar_log_agente","tool",76,3,"0.2 s"],
+ ["      chat gpt-4o-mini  (980 → 160 tok)","model",80,18,"1.7 s"],
+];
+
+/* ========== comportamento ========== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function hl(el){ if (window.hljs) { try { hljs.highlightElement(el); } catch(e){} } }
+
+/* abas */
+const VIEWS = ["orquestracao","cenarios","codigo","banco","comparativo","observabilidade"];
+function showView(v){
+  if (!VIEWS.includes(v)) v = VIEWS[0];
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
+  VIEWS.forEach(x => { $("#view-"+x).hidden = x !== v; });
+  try { localStorage.setItem("maf.view", v); } catch(e){}
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => { showView(b.dataset.view); history.replaceState(null,"","#"+b.dataset.view); }));
+
+/* padrões */
+function renderPatterns(){
+  $("#patterns").innerHTML = PATTERNS.map(p => `
+    <button class="card pattern" data-id="${p.id}" aria-pressed="false">
+      ${p.svg}
+      <h3>${p.nome}</h3>
+      <p class="muted" style="font-size:.88rem">${p.resumo}</p>
+      <span class="who">quem decide: <b>${p.quem}</b></span>
+    </button>`).join("");
+  document.querySelectorAll(".card.pattern").forEach(b => b.addEventListener("click", () => selectPattern(b.dataset.id)));
+}
+function selectPattern(id){
+  const p = PATTERNS.find(x => x.id === id);
+  document.querySelectorAll(".card.pattern").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === id));
+  $("#pattern-detail").innerHTML = `
+    <div style="display:grid;gap:12px;min-width:0">
+      <div><span class="tag">${p.nome}</span></div>
+      <h3>${p.resumo}</h3>
+      <div><span class="eyebrow">Use quando</span><ul>${p.quando.map(q=>`<li>${q}</li>`).join("")}</ul></div>
+      <div><span class="eyebrow">Evite quando</span><ul>${p.evite.map(q=>`<li>${q}</li>`).join("")}</ul></div>
+      <p class="muted" style="font-size:.9rem">Cenário no pacote: ${p.cenario}</p>
+    </div>
+    <pre class="code"><code class="language-python">${esc(p.code)}</code></pre>`;
+  hl($("#pattern-detail code"));
+}
+
+/* decisor */
+const DECIDE = {
+  q1:{ pergunta:"As etapas do seu processo…", opcoes:[
+    ["são fixas e conhecidas", {verdict:"sequential"}],
+    ["são independentes entre si", {verdict:"concurrent"}],
+    ["dependem do que o usuário pede", {next:"q2"}] ] },
+  q2:{ pergunta:"E quem deve conduzir?", opcoes:[
+    ["um especialista por vez: recebe, resolve, encerra", {verdict:"handoff"}],
+    ["vários opinam e refinam em rodadas", {verdict:"groupchat"}],
+    ["ninguém sabe os passos: precisa planejar e replanejar", {verdict:"magentic"}] ] },
+};
+function renderDecide(step="q1", trail=[]){
+  const body = $("#decide-body");
+  if (DECIDE[step]) {
+    const q = DECIDE[step];
+    body.innerHTML = `${trail.length?`<p class="muted" style="font-size:.9rem;margin-bottom:8px">${trail.join(" → ")}</p>`:""}
+      <p style="font-weight:500;margin-bottom:10px">${q.pergunta}</p><div class="choices"></div>`;
+    const c = body.querySelector(".choices");
+    q.opcoes.forEach(([label, r]) => {
+      const b = document.createElement("button"); b.textContent = label;
+      b.addEventListener("click", () => r.next ? renderDecide(r.next, [...trail, label]) : renderVerdict(r.verdict, [...trail, label]));
+      c.appendChild(b);
+    });
+  }
+}
+function renderVerdict(id, trail){
+  const p = PATTERNS.find(x => x.id === id);
+  $("#decide-body").innerHTML = `<p class="muted" style="font-size:.9rem;margin-bottom:8px">${trail.join(" → ")}</p>
+    <div class="verdict"><div><strong>${p.nome}</strong><br><span style="font-size:.9rem">${p.resumo} Quem decide: ${p.quem}.</span></div></div>
+    <div class="choices" style="margin-top:10px"><button id="dec-ver">Ver o padrão</button><button id="dec-reset">Recomeçar</button></div>`;
+  $("#dec-ver").addEventListener("click", () => { selectPattern(id); $("#pattern-detail").scrollIntoView({behavior:"smooth",block:"start"}); });
+  $("#dec-reset").addEventListener("click", () => renderDecide());
+}
+
+/* simulador */
+let scen = SCENARIOS[0], cursor = 0, timer = null;
+function renderScenList(){
+  $("#scen-list").innerHTML = SCENARIOS.map(s => `<button data-id="${s.id}" aria-pressed="${s.id===scen.id}"><strong>${s.nome}</strong><small>${s.padrao}</small></button>`).join("");
+  document.querySelectorAll("#scen-list button").forEach(b => b.addEventListener("click", () => { scen = SCENARIOS.find(s=>s.id===b.dataset.id); renderScenList(); resetSim(); }));
+}
+function resetSim(){
+  clearTimeout(timer); timer = null; cursor = 0;
+  $("#scen-head").innerHTML = `<span class="eyebrow">${scen.padrao}</span><h3 style="margin-top:2px">${scen.nome}</h3><p class="muted" style="font-size:.9rem">${scen.desc} <a href="#codigo" data-file="${scen.arquivo}" class="golink">ver código</a></p>`;
+  $("#scen-head .golink").addEventListener("click", e => { e.preventDefault(); showView("codigo"); selectFile(scen.arquivo); history.replaceState(null,"","#codigo"); });
+  $("#lanes").innerHTML = scen.lanes.map((l,i)=>`<span class="lane" data-i="${i}"><span class="dot"></span>${l}</span>`).join("");
+  $("#log").innerHTML = ""; setStatus("pronto");
+  $("#btn-run").textContent = "▶ Executar"; $("#btn-step").disabled = false;
+}
+function setStatus(t){ $("#sim-status").textContent = t; }
+function stepSim(){
+  if (cursor >= scen.steps.length) { setStatus("concluído"); $("#btn-step").disabled = true; $("#btn-run").textContent = "▶ Executar"; clearTimeout(timer); timer=null; return false; }
+  const s = scen.steps[cursor++];
+  const lanes = document.querySelectorAll(".lane");
+  if (s.lane !== undefined) {
+    lanes.forEach(l => { if (!scen.parallel) l.classList.remove("active"); });
+    const L = lanes[s.lane]; L.classList.add("active"); if (s.done) { L.classList.remove("active"); L.classList.add("done"); }
+  } else if (s.t === "out") { lanes.forEach(l => { l.classList.remove("active"); l.classList.add("done"); }); }
+  const el = document.createElement("div"); el.className = "msg " + s.t;
+  const label = s.t==="user" ? "usuário" : s.t==="tool" ? "tool" : s.t==="out" ? "saída" : scen.lanes[s.lane];
+  let body;
+  if (s.t === "tool") body = `<strong>${esc(s.name)}</strong>(${esc(J(s.args))})<code>→ ${esc(J(s.out))}</code>`;
+  else body = esc(s.b);
+  el.innerHTML = `<span class="k">${esc(label)}</span><div class="b">${body}</div>`;
+  $("#log").appendChild(el); $("#log").scrollTop = $("#log").scrollHeight;
+  setStatus(`passo ${cursor} de ${scen.steps.length}`);
+  return true;
+}
+function runSim(){
+  if (timer) { clearTimeout(timer); timer = null; $("#btn-run").textContent = "▶ Continuar"; setStatus("pausado"); return; }
+  if (cursor >= scen.steps.length) resetSim();
+  $("#btn-run").textContent = "⏸ Pausar";
+  const tick = () => { if (stepSim()) { const next = scen.steps[cursor]; timer = setTimeout(tick, next && next.t==="tool" ? 900 : 1400); } };
+  tick();
+}
+$("#btn-run").addEventListener("click", runSim);
+$("#btn-step").addEventListener("click", () => { if (timer) { clearTimeout(timer); timer=null; $("#btn-run").textContent="▶ Continuar"; } stepSim(); });
+$("#btn-reset").addEventListener("click", resetSim);
+
+/* arquivos */
+const GROUPS = [["agents", k=>k.startsWith("agents/")],["tools", k=>k.startsWith("tools/")],["raiz", k=>!k.includes("/")]];
+let currentFile = "agents/03_sequential_atualizacao_cadastral.py";
+function renderFileList(){
+  $("#filelist").innerHTML = GROUPS.map(([g,f]) => `<div class="grp">${g}</div>` + Object.keys(FILES).filter(f).map(k => `<button data-f="${k}" aria-pressed="${k===currentFile}">${k.replace(/^.*\//,"")}</button>`).join("")).join("");
+  document.querySelectorAll("#filelist button").forEach(b => b.addEventListener("click", () => selectFile(b.dataset.f)));
+}
+function langOf(k){ return k.endsWith(".py") ? "python" : k.endsWith(".md") ? "markdown" : k.endsWith(".sql") ? "sql" : "plaintext"; }
+function selectFile(k){
+  currentFile = k; renderFileList();
+  $("#file-name").textContent = k;
+  const code = $("#file-body"); code.className = "language-" + langOf(k); code.removeAttribute("data-highlighted"); code.textContent = FILES[k]; hl(code);
+}
+$("#btn-copy").addEventListener("click", () => {
+  const txt = FILES[currentFile], b = $("#btn-copy");
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($("#file-body")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selecionado — Ctrl+C"; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { b.textContent = "Copiado"; setTimeout(()=>b.textContent="Copiar",1500); }).catch(fallback); else fallback();
+});
+
+/* banco */
+$("#seed-rows").innerHTML = SEED.map(r => `<tr><td style="font-family:var(--font-mono);font-size:.82rem">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td style="font-family:var(--font-mono);font-size:.82rem">${r[4]}</td><td>${r[5]}</td><td class="num">${r[6].toLocaleString("pt-BR",{minimumFractionDigits:2})}</td></tr>`).join("");
+document.querySelectorAll("#db-tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#db-tabs button").forEach(x => x.setAttribute("aria-pressed", x===b));
+  ["dados","schema","seed","compose","setup"].forEach(k => { $("#db-"+k).hidden = k !== b.dataset.db; });
+  const c = $("#db-"+b.dataset.db+" code"); if (c && !c.dataset.highlighted) hl(c);
+}));
+
+/* trace */
+$("#trace").innerHTML = TRACE.map(([n,kind,left,w,dur]) => `<div class="row"><span style="white-space:pre">${esc(n)}</span><span style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center"><span style="position:relative;height:10px"><span class="bar ${kind}" style="position:absolute;left:${left}%;width:${w}%"></span></span><span class="muted" style="font-size:.75rem">${dur}</span></span></div>`).join("");
+
+/* init */
+renderPatterns(); selectPattern("sequential"); renderDecide(); renderScenList(); resetSim(); selectFile(currentFile);
+document.querySelectorAll("#view-comparativo code, #view-observabilidade code").forEach(hl);
+let initial = (location.hash || "").slice(1);
+if (!VIEWS.includes(initial)) { try { initial = localStorage.getItem("maf.view") || ""; } catch(e){ initial = ""; } }
+showView(initial);
+</script>
