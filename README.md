@@ -120,4 +120,3 @@ Se a telemetria não puder ser ligada (ex.: connection string ausente), as demos
 | Análise de risco/oportunidade | Concorrente | Postgres (R) | `06_…` |
 
 > Dados 100 % fictícios. CPFs e e-mails inventados.
-e mo
